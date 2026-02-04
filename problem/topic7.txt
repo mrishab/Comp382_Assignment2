@@ -1,0 +1,1 @@
+7) Implement an example visualization of Problem 2.18 on pg 156 programmatically. Note that there is a solution given for it on pg 161. Consider the generalized views such as Figures 1.46, 1.48, and 1.50 --- or use concrete example machines and construct the combined machine that would demonstrate its theoretical design with enough detail.
