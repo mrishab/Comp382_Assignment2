@@ -1,0 +1,374 @@
+{
+    "_comment": "PDA configurations for the 6 distinct CFL intersection languages. Transition format: {from, input (null=epsilon), stack_top, to, push=[symbols in order bottom-to-top, empty=pop]}",
+    "an_bn": {
+        "description": "L1: a^n b^n, n>=1. Produced by: (a*b*) ∩ (a^n b^n).",
+        "source": "R1 ∩ C1",
+        "example_strings": [
+            "ab",
+            "aabb",
+            "aaabbb"
+        ],
+        "states": [
+            "q0",
+            "q1",
+            "q2"
+        ],
+        "alphabet": [
+            "a",
+            "b"
+        ],
+        "stack_alphabet": [
+            "A",
+            "Z"
+        ],
+        "initial_state": "q0",
+        "initial_stack_symbol": "Z",
+        "final_states": [
+            "q2"
+        ],
+        "transitions": [
+            {
+                "from": "q0",
+                "input": "a",
+                "stack_top": "Z",
+                "to": "q0",
+                "push": [
+                    "A",
+                    "Z"
+                ]
+            },
+            {
+                "from": "q0",
+                "input": "a",
+                "stack_top": "A",
+                "to": "q0",
+                "push": [
+                    "A",
+                    "A"
+                ]
+            },
+            {
+                "from": "q0",
+                "input": "b",
+                "stack_top": "A",
+                "to": "q1",
+                "push": []
+            },
+            {
+                "from": "q1",
+                "input": "b",
+                "stack_top": "A",
+                "to": "q1",
+                "push": []
+            },
+            {
+                "from": "q1",
+                "input": null,
+                "stack_top": "Z",
+                "to": "q2",
+                "push": [
+                    "Z"
+                ]
+            }
+        ]
+    },
+    "a_bn": {
+        "description": "L2: a b^n, n>=0. Produced by: (a*b*) ∩ (a b^n a) and (a b*a) ∩ (a^n b^n). Exactly one leading 'a', followed by zero or more 'b's.",
+        "source": "R1 ∩ C2  and  R2 ∩ C1",
+        "example_strings": [
+            "a",
+            "ab",
+            "abb",
+            "abbb"
+        ],
+        "states": [
+            "q0",
+            "q1",
+            "q2"
+        ],
+        "alphabet": [
+            "a",
+            "b"
+        ],
+        "stack_alphabet": [
+            "Z"
+        ],
+        "initial_state": "q0",
+        "initial_stack_symbol": "Z",
+        "final_states": [
+            "q2"
+        ],
+        "transitions": [
+            {
+                "from": "q0",
+                "input": "a",
+                "stack_top": "Z",
+                "to": "q1",
+                "push": [
+                    "Z"
+                ]
+            },
+            {
+                "from": "q1",
+                "input": "b",
+                "stack_top": "Z",
+                "to": "q1",
+                "push": [
+                    "Z"
+                ]
+            },
+            {
+                "from": "q1",
+                "input": null,
+                "stack_top": "Z",
+                "to": "q2",
+                "push": [
+                    "Z"
+                ]
+            }
+        ]
+    },
+    "an": {
+        "description": "L3: a^n, n>=1. Produced by: (a*) ∩ (a^n b^n). One or more 'a's, no 'b's.",
+        "source": "R3 ∩ C1",
+        "example_strings": [
+            "a",
+            "aa",
+            "aaa"
+        ],
+        "states": [
+            "q0",
+            "q1",
+            "q2"
+        ],
+        "alphabet": [
+            "a"
+        ],
+        "stack_alphabet": [
+            "Z"
+        ],
+        "initial_state": "q0",
+        "initial_stack_symbol": "Z",
+        "final_states": [
+            "q2"
+        ],
+        "transitions": [
+            {
+                "from": "q0",
+                "input": "a",
+                "stack_top": "Z",
+                "to": "q1",
+                "push": [
+                    "Z"
+                ]
+            },
+            {
+                "from": "q1",
+                "input": "a",
+                "stack_top": "Z",
+                "to": "q1",
+                "push": [
+                    "Z"
+                ]
+            },
+            {
+                "from": "q1",
+                "input": null,
+                "stack_top": "Z",
+                "to": "q2",
+                "push": [
+                    "Z"
+                ]
+            }
+        ]
+    },
+    "a_bn_a": {
+        "description": "L4: a b^n a, n>=0. Produced by: (a b*a) ∩ (a b^n a). Exactly one leading 'a', zero or more 'b's, then exactly one trailing 'a'.",
+        "source": "R2 ∩ C2",
+        "example_strings": [
+            "aa",
+            "aba",
+            "abba",
+            "abbba"
+        ],
+        "states": [
+            "q0",
+            "q1",
+            "q2",
+            "q3"
+        ],
+        "alphabet": [
+            "a",
+            "b"
+        ],
+        "stack_alphabet": [
+            "Z"
+        ],
+        "initial_state": "q0",
+        "initial_stack_symbol": "Z",
+        "final_states": [
+            "q3"
+        ],
+        "transitions": [
+            {
+                "from": "q0",
+                "input": "a",
+                "stack_top": "Z",
+                "to": "q1",
+                "push": [
+                    "Z"
+                ]
+            },
+            {
+                "from": "q1",
+                "input": "b",
+                "stack_top": "Z",
+                "to": "q1",
+                "push": [
+                    "Z"
+                ]
+            },
+            {
+                "from": "q1",
+                "input": "a",
+                "stack_top": "Z",
+                "to": "q2",
+                "push": [
+                    "Z"
+                ]
+            },
+            {
+                "from": "q2",
+                "input": null,
+                "stack_top": "Z",
+                "to": "q3",
+                "push": [
+                    "Z"
+                ]
+            }
+        ]
+    },
+    "aa": {
+        "description": "L5: {aa}. Produced by: (a*) ∩ (a b^n a). Finite language containing only the string 'aa'. This is a* intersected with a b^n a — the only string satisfying both is 'aa' (n=0, no b's).",
+        "source": "R3 ∩ C2",
+        "example_strings": [
+            "aa"
+        ],
+        "states": [
+            "q0",
+            "q1",
+            "q2",
+            "q3"
+        ],
+        "alphabet": [
+            "a"
+        ],
+        "stack_alphabet": [
+            "Z"
+        ],
+        "initial_state": "q0",
+        "initial_stack_symbol": "Z",
+        "final_states": [
+            "q3"
+        ],
+        "transitions": [
+            {
+                "from": "q0",
+                "input": "a",
+                "stack_top": "Z",
+                "to": "q1",
+                "push": [
+                    "Z"
+                ]
+            },
+            {
+                "from": "q1",
+                "input": "a",
+                "stack_top": "Z",
+                "to": "q2",
+                "push": [
+                    "Z"
+                ]
+            },
+            {
+                "from": "q2",
+                "input": null,
+                "stack_top": "Z",
+                "to": "q3",
+                "push": [
+                    "Z"
+                ]
+            }
+        ]
+    },
+    "bn": {
+        "description": "L6: b^n, n>=1. Produced by: (a*b*) ∩ (b^n) and (a b*a) ∩ (b^n). One or more 'b's, no 'a's.",
+        "source": "R1 ∩ C3  and  R2 ∩ C3",
+        "example_strings": [
+            "b",
+            "bb",
+            "bbb"
+        ],
+        "states": [
+            "q0",
+            "q1",
+            "q2"
+        ],
+        "alphabet": [
+            "b"
+        ],
+        "stack_alphabet": [
+            "Z"
+        ],
+        "initial_state": "q0",
+        "initial_stack_symbol": "Z",
+        "final_states": [
+            "q2"
+        ],
+        "transitions": [
+            {
+                "from": "q0",
+                "input": "b",
+                "stack_top": "Z",
+                "to": "q1",
+                "push": [
+                    "Z"
+                ]
+            },
+            {
+                "from": "q1",
+                "input": "b",
+                "stack_top": "Z",
+                "to": "q1",
+                "push": [
+                    "Z"
+                ]
+            },
+            {
+                "from": "q1",
+                "input": null,
+                "stack_top": "Z",
+                "to": "q2",
+                "push": [
+                    "Z"
+                ]
+            }
+        ]
+    },
+    "empty": {
+        "description": "L7: ∅ (empty language). Produced by: (a*) ∩ (b^n). 'a*' contains only strings of a's; 'b^n' contains only strings of b's. No string belongs to both, so the intersection is empty.",
+        "source": "R3 ∩ C3",
+        "example_strings": [],
+        "states": [
+            "q0"
+        ],
+        "alphabet": [],
+        "stack_alphabet": [
+            "Z"
+        ],
+        "initial_state": "q0",
+        "initial_stack_symbol": "Z",
+        "final_states": [],
+        "transitions": []
+    }
+}
