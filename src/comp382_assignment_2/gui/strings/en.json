@@ -1,72 +1,78 @@
 {
-    "window_title": "CFL ∩ Regular Language Visualizer",
-    "header_title": "CFL ∩ Regular Language Visualizer",
-    "header_subtitle": "Demonstrates that the intersection of a CFL and a regular language is a CFL (Problem 2.18)",
-    "dropdown_regular_label": "Regular Language (DFA):",
-    "dropdown_cfl_label": "Context-Free Language (PDA):",
-    "input_label": "Input String w:",
-    "input_placeholder": "Use keyboard below to type...",
-    "dfa_funnel_label": "DFA",
-    "pda_funnel_label": "PDA",
-    "intersection_gate_label": "∩ Gate",
-    "intersection_result_label": "Matched Substring:",
-    "no_match_text": "(no match)",
-    "super_pda_label": "Super PDA (CFL ∩ Regular)",
-    "run_simulation_btn": "Run Simulation",
-    "step_btn": "Step",
-    "reset_btn": "Reset",
-    "status_running": "Running",
-    "status_accepted": "Accepted",
-    "status_rejected": "Rejected",
-    "status_idle": "Idle",
-    "regular_languages": {
-        "a_star_b_star": {
-            "label": "a*b* — zero or more a's followed by zero or more b's",
-            "pattern": "a*b*"
-        },
-        "a_b_star_a": {
-            "label": "ab*a — one a, zero or more b's, one a",
-            "pattern": "ab*a"
-        },
-        "a_star": {
-            "label": "a* — zero or more a's",
-            "pattern": "a*"
-        }
+  "window_title": "CFL ∩ Regular Language Visualizer",
+  "header_title": "CFL ∩ Regular Language Visualizer",
+  "header_subtitle": "Demonstrates that the intersection of a CFL and a regular language is a CFL (Problem 2.18)",
+  "dropdown_regular_label": "Regular Language (DFA):",
+  "dropdown_cfl_label": "Context-Free Language (PDA):",
+  "input_label": "Input String w:",
+  "input_placeholder": "Use keyboard below to type...",
+  "dfa_funnel_label": "DFA",
+  "pda_funnel_label": "PDA",
+  "intersection_gate_label": "∩ Gate",
+  "intersection_result_label": "Matched Substring:",
+  "no_match_text": "(no match)",
+  "super_pda_label": "Super PDA (CFL ∩ Regular)",
+  "run_simulation_btn": "Run Simulation",
+  "step_btn": "Step",
+  "reset_btn": "Reset",
+  "status_running": "Running",
+  "status_accepted": "Accepted",
+  "status_rejected": "Rejected",
+  "status_idle": "Idle",
+
+  "regular_languages": {
+    "a_star_b_star": {
+      "label": "a*b* — zero or more a's followed by zero or more b's",
+      "pattern": "a*b*"
     },
-    "context_free_languages": {
-        "an_bn": {
-            "label": "aⁿbⁿ — equal a's then b's (n≥1)",
-            "pattern": "aⁿbⁿ"
-        },
-        "a_bn_a": {
-            "label": "abⁿa — one a, n b's, one a (n≥0)",
-            "pattern": "abⁿa"
-        },
-        "bn": {
-            "label": "bⁿ — one or more b's",
-            "pattern": "bⁿ"
-        }
+    "a_b_star_a": {
+      "label": "ab*a — one a, zero or more b's, one a",
+      "pattern": "ab*a"
     },
-    "intersection_map": {
-        "a_star_b_star__an_bn": "an_bn",
-        "a_star_b_star__a_bn_a": "a_bn",
-        "a_star_b_star__bn": "bn",
-        "a_b_star_a__an_bn": "a_bn",
-        "a_b_star_a__a_bn_a": "a_bn_a",
-        "a_b_star_a__bn": "bn",
-        "a_star__an_bn": "an",
-        "a_star__a_bn_a": "aa",
-        "a_star__bn": "empty"
+    "a_star": {
+      "label": "a* — zero or more a's",
+      "pattern": "a*"
+    }
+  },
+
+  "context_free_languages": {
+    "an_bn": {
+      "label": "aⁿbⁿ — equal a's then b's (n≥1)",
+      "pattern": "aⁿbⁿ"
     },
-    "intersection_labels": {
-        "an_bn": "aⁿbⁿ",
-        "a_bn": "abⁿ",
-        "an": "aⁿ",
-        "a_bn_a": "abⁿa",
-        "aa": "{aa}",
-        "bn": "bⁿ",
-        "empty": "∅ (empty)"
+    "a_bn_a": {
+      "label": "abⁿa — one a, n b's, one a (n≥0)",
+      "pattern": "abⁿa"
     },
-    "empty_language_message": "∅ — No string is accepted by this intersection.",
-    "intersection_result_prefix": "Intersection Language:"
+    "bn": {
+      "label": "bⁿ — one or more b's",
+      "pattern": "bⁿ"
+    }
+  },
+
+  "intersection_map": {
+    "a_star_b_star__an_bn": "an_bn",
+    "a_star_b_star__a_bn_a": "aa",
+    "a_star_b_star__bn": "bn",
+
+    "a_b_star_a__an_bn": "empty",
+    "a_b_star_a__a_bn_a": "a_bn_a",
+    "a_b_star_a__bn": "empty",
+
+    "a_star__an_bn": "empty",
+    "a_star__a_bn_a": "aa",
+    "a_star__bn": "empty"
+  },
+
+  "intersection_labels": {
+    "an_bn": "aⁿbⁿ",
+    "an": "aⁿ",
+    "a_bn_a": "abⁿa",
+    "aa": "{aa}",
+    "bn": "bⁿ",
+    "empty": "∅ (empty)"
+  },
+
+  "empty_language_message": "∅ — No string is accepted by this intersection.",
+  "intersection_result_prefix": "Intersection Language:"
 }
