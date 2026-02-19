@@ -1,0 +1,22 @@
+[project]
+name = "COMP382-Assignment_2"
+version = "0.1.0"
+description = "Python based app to simulate a super PDA showing intersection of a regular language and a CFL is a CFL"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pyside6>=6.10.1",
+]
+
+[project.scripts]
+main = "comp382_assignment_2.main:main"
+test = "pytest:console_main"
+
+[build-system]
+requires = ["uv_build>=0.7.0,<0.8.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4",
+]

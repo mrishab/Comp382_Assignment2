@@ -1,0 +1,5 @@
+# uv
+.venv
+
+# Python
+__pycache__

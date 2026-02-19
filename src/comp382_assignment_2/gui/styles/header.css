@@ -1,0 +1,11 @@
+QLabel#HeaderTitle {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+QLabel#SubtitleLabel {
+    font-size: 16px;
+    color: #ced4da;
+    margin-bottom: 20px;
+}
