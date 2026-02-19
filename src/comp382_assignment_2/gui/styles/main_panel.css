@@ -1,4 +1,48 @@
 QWidget#MainPanel {
-    background-color: #2c3034;
+    background-color: #1e1e2e;
     color: #ffffff;
+}
+
+QFrame#LeftPanel {
+    background-color: #1e1e2e;
+    border: 1px solid #333;
+    border-radius: 6px;
+}
+
+QFrame#PdaContainer {
+    background-color: #1a1a2a;
+    border: 1px solid #333;
+    border-radius: 6px;
+}
+
+QComboBox {
+    background-color: #2a2a3a;
+    color: #e0e0e0;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 13px;
+    min-height: 24px;
+}
+
+QComboBox:hover {
+    border-color: #7a7aaa;
+}
+
+QComboBox::drop-down {
+    border: none;
+    width: 24px;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #2a2a3a;
+    color: #e0e0e0;
+    selection-background-color: #4A90D9;
+    selection-color: #ffffff;
+    border: 1px solid #555;
+}
+
+QSplitter::handle:horizontal {
+    background-color: #333;
+    width: 4px;
 }

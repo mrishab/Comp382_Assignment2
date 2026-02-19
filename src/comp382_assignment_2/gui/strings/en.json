@@ -1,39 +1,72 @@
 {
-    "window_title": "Regular Expression Practice Lab",
-    "window_subtitle": "Regular Expression Practice Lab",
-    "left_sidebar_title": "Definition 1.52 Reference",
-    "left_sidebar_info_points": [
-        "1. $a for some a ∈ Σ",
-        "2. ε (empty string)",
-        "3. ∅ (empty language)",
-        "4. (R₁ ∪ R₂)",
-        "5. (R₁ ◦ R₂)",
-        "6. (R₁*)"
-    ],
-    "header_title": "Regular Expression Practice Lab",
-    "header_subtitle": "Alphabet Σ ≡ {a,b}",
-    "section_1_heading": "1. Define your Regular Expression",
-    "section_1_subheading": "Enter R:",
-    "section_1_input_placeholder": "e.g., ((a ∪ b* ◦ a)",
-    "section_1_status_text_valid": "Syntax Valid",
-    "section_1_status_text_invalid": "Syntax Invalid",
-    "section_1_status_text_empty": "-",
-    "section_2_heading": "2. Test Strings",
-    "section_2_subheading": "Type a string to check (use \"e\" for empty):",
-    "section_2_input_placeholder": "aba",
-    "section_2_status_text_valid": "ACCEPTED",
-    "section_2_status_text_invalid": "REJECTED",
-    "section_2_status_text_empty": "-",
-    "practice_examples_label": "Practice Examples:",
-    "practice_examples_placeholder": "Select an example...",
-    "practice_examples_samples_descriptions": {
-        "desc_star_a": "Matches zero or more 'a's (e.g., '', 'a', 'aaaa')",
-        "desc_concat_ab": "Concatenation: 'a' followed by 'b'",
-        "desc_union_ab": "Union: Matches 'a' OR 'b'",
-        "desc_star_ab_group": "Zero or more repetitions of 'ab' (e.g., '', 'ab', 'abab')",
-        "desc_star_a_star_b": "Any number of 'a's followed by any number of 'b's",
-        "desc_universal_ab": "Matches any string of 'a's and 'b's (universal set over {a,b})",
-        "desc_exact_bab": "Exact match for string 'bab'",
-        "desc_union_a_epsilon": "Matches 'a' or the empty string"
-    }
+    "window_title": "CFL ∩ Regular Language Visualizer",
+    "header_title": "CFL ∩ Regular Language Visualizer",
+    "header_subtitle": "Demonstrates that the intersection of a CFL and a regular language is a CFL (Problem 2.18)",
+    "dropdown_regular_label": "Regular Language (DFA):",
+    "dropdown_cfl_label": "Context-Free Language (PDA):",
+    "input_label": "Input String w:",
+    "input_placeholder": "Use keyboard below to type...",
+    "dfa_funnel_label": "DFA",
+    "pda_funnel_label": "PDA",
+    "intersection_gate_label": "∩ Gate",
+    "intersection_result_label": "Matched Substring:",
+    "no_match_text": "(no match)",
+    "super_pda_label": "Super PDA (CFL ∩ Regular)",
+    "run_simulation_btn": "Run Simulation",
+    "step_btn": "Step",
+    "reset_btn": "Reset",
+    "status_running": "Running",
+    "status_accepted": "Accepted",
+    "status_rejected": "Rejected",
+    "status_idle": "Idle",
+    "regular_languages": {
+        "a_star_b_star": {
+            "label": "a*b* — zero or more a's followed by zero or more b's",
+            "pattern": "a*b*"
+        },
+        "a_b_star_a": {
+            "label": "ab*a — one a, zero or more b's, one a",
+            "pattern": "ab*a"
+        },
+        "a_star": {
+            "label": "a* — zero or more a's",
+            "pattern": "a*"
+        }
+    },
+    "context_free_languages": {
+        "an_bn": {
+            "label": "aⁿbⁿ — equal a's then b's (n≥1)",
+            "pattern": "aⁿbⁿ"
+        },
+        "a_bn_a": {
+            "label": "abⁿa — one a, n b's, one a (n≥0)",
+            "pattern": "abⁿa"
+        },
+        "bn": {
+            "label": "bⁿ — one or more b's",
+            "pattern": "bⁿ"
+        }
+    },
+    "intersection_map": {
+        "a_star_b_star__an_bn": "an_bn",
+        "a_star_b_star__a_bn_a": "a_bn",
+        "a_star_b_star__bn": "bn",
+        "a_b_star_a__an_bn": "a_bn",
+        "a_b_star_a__a_bn_a": "a_bn_a",
+        "a_b_star_a__bn": "bn",
+        "a_star__an_bn": "an",
+        "a_star__a_bn_a": "aa",
+        "a_star__bn": "empty"
+    },
+    "intersection_labels": {
+        "an_bn": "aⁿbⁿ",
+        "a_bn": "abⁿ",
+        "an": "aⁿ",
+        "a_bn_a": "abⁿa",
+        "aa": "{aa}",
+        "bn": "bⁿ",
+        "empty": "∅ (empty)"
+    },
+    "empty_language_message": "∅ — No string is accepted by this intersection.",
+    "intersection_result_prefix": "Intersection Language:"
 }
