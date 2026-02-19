@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "pyside6>=6.10.1",
+    "pyvis>=0.3.2",
 ]
 
 [project.scripts]
@@ -19,4 +20,6 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "pytest>=8.3.4",
+    "networkx==3.6.1",
+    "pyvis==0.3.2"
 ]
