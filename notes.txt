@@ -1,0 +1,22 @@
+Regular language
+    a*◦b*
+    a◦b*◦a
+    a*
+
+CFL:
+    - a^n◦b^n
+    - a◦b^n◦a
+    - b^n
+
+Intersection (CFL):
+    a*◦b*       intersect   a^n◦b^n     ==  a^n◦b^n
+    a◦b*◦a      intersect   a^n◦b^n     ==  a◦b^n
+    a*          intersect   a^n◦b^n     ==  a^n
+
+    a*◦b*       intersect   a◦b^n◦a     ==  a◦b^n
+    a◦b*◦a      intersect   a◦b^n◦a     ==  a◦b^n◦a
+    a*          intersect   a◦b^n◦a     ==  aa
+
+    a*◦b*       intersect   b^n         == b^n
+    a◦b*◦a      intersect   b^n         == b^n
+    a*          intersect   b^n         == <empty>
