@@ -1,7 +1,5 @@
 # uv
 .venv
-
 # Python
 __pycache__
-
 lib/

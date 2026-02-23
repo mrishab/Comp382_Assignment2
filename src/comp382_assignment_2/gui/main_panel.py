@@ -1,11 +1,3 @@
-"""
-main_panel.py — Top-level panel composing the entire UI.
-
-Layout (horizontal 50/50 split):
-    LEFT  — dropdowns, input field, virtual keyboard, flow diagram
-    RIGHT — Super PDA PyVis view + simulation controls
-"""
-
 import re
 from PySide6.QtWidgets import (
     QWidget,
@@ -27,6 +19,7 @@ from comp382_assignment_2.gui.validated_line_edit import ValidatedLineEdit
 from comp382_assignment_2.gui.virtual_keyboard import VirtualKeyboard
 from comp382_assignment_2.common.symbols import STRING_SYMBOLS
 from comp382_assignment_2.pda.pda_loader import load_pda
+from comp382_assignment_2.gui.content_panel import ContentPanel
 from comp382_assignment_2.gui.pushdown_automata.pushdown_automata_view import (
     PushdownAutomataView,
 )
@@ -67,8 +60,6 @@ class MainPanel(QWidget):
 
         self._setup_ui()
 
-    # ── UI construction ──────────────────────────────────────────────────
-
     def _setup_ui(self):
         self.setStyleSheet(load_stylesheet("main_panel.css"))
         self.setObjectName("MainPanel")
@@ -77,24 +68,32 @@ class MainPanel(QWidget):
         root.setContentsMargins(16, 12, 16, 10)
         root.setSpacing(6)
 
-        # -- Header (spans full width) ----------------------------------------
+        # Header (spans full width)
         root.addWidget(Header(self.app_config))
 
-        # -- Horizontal splitter: LEFT | RIGHT --------------------------------
+        # Horizontal splitter: LEFT | RIGHT
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.setHandleWidth(5)
         splitter.setChildrenCollapsible(False)
 
-        splitter.addWidget(self._build_left_panel())
+        # Left panel: language selectors + input + flow diagram
+        content = ContentPanel(self.app_config)
+        splitter.addWidget(content)
         splitter.addWidget(self._build_right_panel())
 
-        # Equal 50/50 split
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 1)
 
         root.addWidget(splitter, stretch=1)
 
-        # -- Wire signals -----------------------------------------------------
+        # Grab widget refs from sub-components for signal wiring
+        self.reg_dropdown = content.language_builder.reg_dd
+        self.cfl_dropdown = content.language_builder.cfl_dd
+        self.input_field = content.language_builder.input_bar.input_field
+        self.keyboard = content.language_builder.input_bar.keyboard
+        self.flow = content.flow
+
+        # Wire signals
         self.reg_dropdown.currentIndexChanged.connect(self._on_dropdown_changed)
         self.cfl_dropdown.currentIndexChanged.connect(self._on_dropdown_changed)
         self.input_field.textChanged.connect(self._on_input_changed)
@@ -107,46 +106,6 @@ class MainPanel(QWidget):
     # ── left panel ───────────────────────────────────────────────────────
 
     def _build_left_panel(self) -> QFrame:
-        panel = QFrame()
-        panel.setObjectName("LeftPanel")
-        layout = QVBoxLayout(panel)
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(6)
-
-        # -- Regular Language dropdown ----------------------------------------
-        reg_label = QLabel(self.app_config.dropdown_regular_label)
-        reg_label.setStyleSheet("color: #ccc; font-size: 12px;")
-        self.reg_dropdown = QComboBox()
-        self.reg_dropdown.addItem("Select regular language...")
-        for key, info in self.app_config.regular_languages.items():
-            self.reg_dropdown.addItem(info["label"], key)
-
-        layout.addWidget(reg_label)
-        layout.addWidget(self.reg_dropdown)
-
-        # -- CFL dropdown -----------------------------------------------------
-        cfl_label = QLabel(self.app_config.dropdown_cfl_label)
-        cfl_label.setStyleSheet("color: #ccc; font-size: 12px;")
-        self.cfl_dropdown = QComboBox()
-        self.cfl_dropdown.addItem("Select context-free language...")
-        for key, info in self.app_config.context_free_languages.items():
-            self.cfl_dropdown.addItem(info["label"], key)
-
-        layout.addWidget(cfl_label)
-        layout.addWidget(self.cfl_dropdown)
-
-        # -- Input field ------------------------------------------------------
-        input_label = QLabel(self.app_config.input_label)
-        input_label.setStyleSheet("color: #ccc; font-size: 12px;")
-        self.input_field = ValidatedLineEdit(allowed_chars=STRING_SYMBOLS)
-        self.input_field.setPlaceholderText(self.app_config.input_placeholder)
-        self.input_field.setStyleSheet(
-            "background:#ffffff; color:#222; border:1px solid #555; "
-            "border-radius:4px; padding:6px; font-size:14px;"
-        )
-
-        layout.addWidget(input_label)
-        layout.addWidget(self.input_field)
 
         # -- Virtual keyboard -------------------------------------------------
         self.keyboard = VirtualKeyboard(STRING_SYMBOLS, self.input_field)
@@ -194,8 +153,21 @@ class MainPanel(QWidget):
         header_row.addWidget(self.status_label)
         layout.addLayout(header_row)
 
-        # -- PDA PyVis view (takes all remaining space) -----------------------
+        # -- Placeholder (shown until both dropdowns are selected) ------------
+        self.placeholder_label = QLabel(
+            "Select a Regular Language and a CFL\nto construct the Super PDA"
+        )
+        self.placeholder_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.placeholder_label.setStyleSheet(
+            "color: #888; font-size: 16px; font-style: italic; "
+            "background: #1a1a2a; border: 2px dashed #444; "
+            "border-radius: 10px; padding: 40px;"
+        )
+        layout.addWidget(self.placeholder_label, stretch=1)
+
+        # -- PDA PyVis view (hidden until a valid PDA is loaded) --------------
         self.pda_view = PushdownAutomataView()
+        self.pda_view.setVisible(False)
         layout.addWidget(self.pda_view, stretch=1)
 
         # -- Empty language overlay (hidden by default) -----------------------
@@ -244,7 +216,7 @@ class MainPanel(QWidget):
             self._pda_ctrl = None
             self._pda_config_key = None
             self._update_lang_display("")
-            self._show_empty_language(False)
+            self._set_view_mode("placeholder")
 
         self._on_input_changed(self.input_field.text())
         self._update_buttons_enabled()
@@ -346,7 +318,7 @@ class MainPanel(QWidget):
             self._pda_model = None
             self._pda_ctrl = None
             self._update_lang_display("")
-            self._show_empty_language(False)
+            self._set_view_mode("placeholder")
             return
 
         # Resolve the display label for this intersection
@@ -358,10 +330,10 @@ class MainPanel(QWidget):
             # Empty language — no PDA to simulate
             self._pda_model = None
             self._pda_ctrl = None
-            self._show_empty_language(True)
+            self._set_view_mode("empty")
             return
 
-        self._show_empty_language(False)
+        self._set_view_mode("pda")
         self._pda_model = load_pda(pda_config_key)
         self._pda_ctrl = PushdownAutomataController(self._pda_model, self.pda_view)
 
@@ -376,10 +348,11 @@ class MainPanel(QWidget):
         else:
             self.lang_badge.setVisible(False)
 
-    def _show_empty_language(self, show: bool):
-        """Toggle between the PDA view and the empty language message."""
-        self.pda_view.setVisible(not show)
-        self.empty_label.setVisible(show)
+    def _set_view_mode(self, mode: str):
+        """Switch the right panel between 'placeholder', 'empty', and 'pda'."""
+        self.placeholder_label.setVisible(mode == "placeholder")
+        self.empty_label.setVisible(mode == "empty")
+        self.pda_view.setVisible(mode == "pda")
 
     def _test_cfl_acceptance(self, cfl_key: str, text: str) -> bool:
         """Test if text is accepted by the raw CFL PDA (for visual feedback)."""

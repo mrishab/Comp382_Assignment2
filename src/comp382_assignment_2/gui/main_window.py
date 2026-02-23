@@ -10,12 +10,12 @@ class MainWindow(QMainWindow):
         self.resize(app_config.window_width, app_config.window_height)
         self.setWindowTitle(app_config.window_title)
 
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
+        
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
         central_widget.setLayout(layout)
 
         self.main_panel = MainPanel(app_config)

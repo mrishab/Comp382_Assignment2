@@ -44,4 +44,3 @@ uv run main
 ```bash
 uv run test
 ```
-

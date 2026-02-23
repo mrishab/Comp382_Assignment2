@@ -19,7 +19,18 @@ import networkx as nx
 from pyvis.network import Network
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 from PySide6.QtWebEngineWidgets import QWebEngineView
+from PySide6.QtWebEngineCore import QWebEnginePage
 from PySide6.QtCore import QUrl
+
+
+class _SilentPage(QWebEnginePage):
+    """Custom page that suppresses the ResizeObserver loop console noise."""
+    _SUPPRESSED = {"ResizeObserver loop completed with undelivered notifications."}
+
+    def javaScriptConsoleMessage(self, level, message, lineNumber, sourceId):
+        if message in self._SUPPRESSED:
+            return
+        super().javaScriptConsoleMessage(level, message, lineNumber, sourceId)
 
 # ── Local vis.js path (ships with pyvis) ────────────────────────────────────
 _PYVIS_LIB = os.path.join(os.path.dirname(pyvis.__file__), "templates", "lib")
@@ -73,6 +84,7 @@ class PushdownAutomataView(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.web_view = QWebEngineView()
+        self.web_view.setPage(_SilentPage(self.web_view))
         layout.addWidget(self.web_view)
 
         # Output directory — the HTML file lives here alongside vis.js
@@ -98,14 +110,19 @@ class PushdownAutomataView(QWidget):
         with open(self._html_path, "w", encoding="utf-8") as f:
             f.write(html)
         self._page_loaded = False
+        # Reconnect the signal (it disconnects itself after each load) and reload.
+        try:
+            self.web_view.loadFinished.disconnect(self._on_page_loaded)
+        except RuntimeError:
+            pass
         self.web_view.loadFinished.connect(self._on_page_loaded)
         self.web_view.load(QUrl.fromLocalFile(self._html_path))
 
     def update_state(self, model):
         """Lightweight update — patches info bar + stack via JS. No page reload."""
         if not self._page_loaded:
-            # Page hasn't finished loading yet; fall back to full render
-            self.render_graph(model)
+            # Page is still loading (render_graph already triggered the load).
+            # Skip this lightweight update; the full graph will appear once loaded.
             return
         js = self._build_state_update_js(model)
         self.web_view.page().runJavaScript(js)
@@ -271,15 +288,35 @@ class PushdownAutomataView(QWidget):
             1,
         )
 
-        # Ensure the mynetwork div grows (inject a style block)
+        # Ensure the mynetwork div grows (inject a style block) and disable
+        # vis.js physics after stabilization to stop the ResizeObserver loop.
         style_inject = f"""
         <style>
-          html, body {{ margin:0; padding:0; height:100%; background:{_BG_COLOR}; }}
+          html, body {{ margin:0; padding:0; height:100%; background:{_BG_COLOR}; overflow:hidden; }}
           #mynetwork {{ flex:1 1 auto; min-height:0; }}
           #pda-bottom-bar {{ flex:0 0 auto; }}
           .vis-network {{ background: transparent !important; }}
           canvas {{ background: transparent !important; }}
         </style>
+        <script>
+          // Disable physics once the graph has stabilised so vis.js stops
+          // triggering ResizeObserver callbacks on every animation frame.
+          document.addEventListener('DOMContentLoaded', function () {{
+            // vis-network exposes the network instance as a global variable
+            // created by pyvis; poll until it appears then hook the event.
+            var _poll = setInterval(function () {{
+              if (typeof network !== 'undefined') {{
+                clearInterval(_poll);
+                network.on('stabilizationIterationsDone', function () {{
+                  network.setOptions({{ physics: {{ enabled: false }} }});
+                }});
+                network.on('stabilized', function () {{
+                  network.setOptions({{ physics: {{ enabled: false }} }});
+                }});
+              }}
+            }}, 100);
+          }});
+        </script>
         """
         html = html.replace("</head>", style_inject + "\n</head>", 1)
 
