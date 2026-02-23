@@ -1,326 +1,211 @@
 """
-flow_diagram.py — Custom painted widget that draws the data-flow pipeline:
+flow_diagram.py — Pipeline diagram rendered with NetworkX + Pyvis in a QWebEngineView.
 
-    Input Field
-        |
-    ---------
-    |       |
-   [DFA]  [PDA]     (two funnels)
-    |       |
-    ---------
-        |
-    [∩ Gate]
-        |
-   [Result: Language Label]
-        |
-        v
-   [Super PDA View]
+Shows the data-flow pipeline:
 
-All geometry is computed as proportions of the widget's height/width so
-it scales when the window is resized.
+    Input
+    /   \
+  CFA   PDA
+    \   /
+  ∩ Gate
+     |
+ Language
+     |
+  Result
 """
 
-from PySide6.QtCore import Qt, QRectF, QPointF
-from PySide6.QtGui import (
-    QPainter,
-    QPen,
-    QColor,
-    QBrush,
-    QFont,
-    QPainterPath,
-    QLinearGradient,
+import os
+import re
+import shutil
+import tempfile
+
+import networkx as nx
+import pyvis
+from pyvis.network import Network
+
+from PySide6.QtCore import QUrl
+from PySide6.QtWebEngineCore import QWebEnginePage
+from PySide6.QtWebEngineWidgets import QWebEngineView
+from PySide6.QtWidgets import QWidget, QVBoxLayout
+
+# ── vis.js local assets (shipped with pyvis) ────────────────────────────────────────────
+_PYVIS_LIB = os.path.join(os.path.dirname(pyvis.__file__), "templates", "lib")
+_VIS_DIR = os.path.join(_PYVIS_LIB, "vis-9.1.2")
+
+_BG = "#1a1a2a"
+
+_COL = {
+    "idle":   {"background": "#4A4A6A", "border": "#7070AA"},
+    "accept": {"background": "#5CB85C", "border": "#3A7A3A"},
+    "reject": {"background": "#E74C3C", "border": "#922B21"},
+    "gate":   {"background": "#2d6a4f", "border": "#40916c"},
+    "input":  {"background": "#4A90D9", "border": "#2C5F8A"},
+    "result": {"background": "#22304A", "border": "#5a7eaa"},
+    "lang":   {"background": "#1e2a3e", "border": "#4A90D9"},
+}
+
+_OPTIONS = """{
+  "nodes": {
+    "font": { "size": 14, "color": "#ffffff", "face": "monospace" },
+    "borderWidth": 2,
+    "shadow": { "enabled": true, "color": "rgba(0,0,0,0.5)", "size": 8 }
+  },
+  "edges": {
+    "color": { "color": "#5a7eaa" },
+    "font": { "size": 11, "color": "#aaaacc", "strokeWidth": 0, "align": "middle" },
+    "arrows": { "to": { "enabled": true, "scaleFactor": 0.9 } },
+    "smooth": { "type": "cubicBezier", "forceDirection": "vertical", "roundness": 0.4 }
+  },
+  "layout": {
+    "hierarchical": {
+      "enabled": true,
+      "direction": "UD",
+      "sortMethod": "directed",
+      "nodeSpacing": 130,
+      "levelSeparation": 100
+    }
+  },
+  "physics": { "enabled": false },
+  "interaction": { "dragNodes": false, "zoomView": false, "dragView": false }
+}"""
+
+_STYLE_INJECT = (
+    "<style>\n"
+    "  html, body { margin:0; padding:0; height:100%; background:" + "#1a1a2a" + "; overflow:hidden; }\n"
+    "  #mynetwork { width:100% !important; height:100% !important; }\n"
+    "  .vis-network { background: transparent !important; }\n"
+    "  canvas { background: transparent !important; }\n"
+    "</style>\n"
 )
-from PySide6.QtWidgets import QWidget
 
 
-# Palette
-_BG = QColor("#1e1e2e")
-_LINE = QColor("#5a7eaa")
-_FUNNEL_DFA = QColor("#4A90D9")
-_FUNNEL_PDA = QColor("#9B59B6")
-_GATE_BG = QColor("#2d6a4f")
-_GATE_BORDER = QColor("#40916c")
-_RESULT_BG = QColor("#1a1a2e")
-_RESULT_BORDER = QColor("#5a7eaa")
-_LABEL = QColor("#cccccc")
-_ARROW = QColor("#5a7eaa")
-_LANG_LABEL_BG = QColor("#1e2a3e")
-_LANG_LABEL_BORDER = QColor("#4A90D9")
+class _SilentPage(QWebEnginePage):
+    _SUPPRESSED = {"ResizeObserver loop completed with undelivered notifications."}
 
-# Proportional Y positions (fraction of widget height)
-_Y_INPUT_BOT = 0.07
-_Y_FORK = 0.14
-_Y_FUNNEL_TOP = 0.17
-_Y_FUNNEL_BOT = 0.38
-_Y_GATE_TOP = 0.44
-_Y_GATE_BOT = 0.55
-_Y_LANG_TOP = 0.60
-_Y_LANG_BOT = 0.70
-_Y_RESULT_TOP = 0.74
-_Y_RESULT_BOT = 0.83
-_Y_ARROW_TIP = 0.92
+    def javaScriptConsoleMessage(self, level, message, lineNumber, sourceId):
+        if message not in self._SUPPRESSED:
+            super().javaScriptConsoleMessage(level, message, lineNumber, sourceId)
 
 
 class FlowDiagram(QWidget):
-    """
-    Decorative pipeline diagram.  Provides anchor points so the parent
-    layout can position real widgets (dropdowns, input field, result label,
-    PDA webview) at the correct spots.
-    """
+    """Pipeline diagram: Input → CFA (DFA) / PDA → ∩ Gate → Language → Result."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
-        # Status text shown inside the intersection gate
-        self.gate_status = ""
-        # Text shown in the result box
-        self.result_text = ""
-        # DFA / PDA acceptance status: None = idle, True = accept, False = reject
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        self.web_view = QWebEngineView()
+        self.web_view.setPage(_SilentPage(self.web_view))
+        layout.addWidget(self.web_view)
+
+        self._out_dir = os.path.join(tempfile.gettempdir(), "flow_diagram")
+        os.makedirs(self._out_dir, exist_ok=True)
+
+        for fname in ("vis-network.min.js", "vis-network.css"):
+            dst = os.path.join(self._out_dir, fname)
+            if not os.path.exists(dst):
+                shutil.copy(os.path.join(_VIS_DIR, fname), dst)
+
+        self._html_path = os.path.join(self._out_dir, "flow.html")
+
+        # ── Public state (mutated by main_panel before calling update()) ──────
+        self.gate_status: str = ""
+        self.result_text: str = ""
         self.dfa_status: bool | None = None
         self.pda_status: bool | None = None
-        # Intersection language label (e.g. "aⁿbⁿ", "∅ (empty)")
         self.language_label: str = ""
 
-    # ── Y helpers (proportional) ─────────────────────────────────────────
+        self._render()
 
-    def _y(self, frac: float) -> float:
-        return self.height() * frac
+    # ── public API ────────────────────────────────────────────────────────────
 
-    def _cx(self) -> float:
-        return self.width() / 2
+    def update(self):
+        """Re-render and reload the pyvis graph (called by main_panel after state changes)."""
+        self._render()
 
-    def _spread(self) -> float:
-        """Half the horizontal distance between the two funnels."""
-        return min(self.width() * 0.18, 160)
+    # ── private ───────────────────────────────────────────────────────────────────
 
-    # ── public geometry for parent to position real widgets ──────────────
+    def _status_color(self, status: bool | None) -> dict:
+        if status is True:
+            return _COL["accept"]
+        if status is False:
+            return _COL["reject"]
+        return _COL["idle"]
 
-    def result_box_rect(self) -> QRectF:
-        cx = self._cx()
-        w = min(self.width() * 0.45, 380)
-        return QRectF(
-            cx - w / 2,
-            self._y(_Y_RESULT_TOP),
-            w,
-            self._y(_Y_RESULT_BOT) - self._y(_Y_RESULT_TOP),
-        )
+    def _edge_label(self, status: bool | None) -> str:
+        if status is True:
+            return "✓"
+        if status is False:
+            return "✗"
+        return ""
 
-    def arrow_tip_y(self) -> float:
-        return self._y(_Y_ARROW_TIP)
+    def _render(self):
+        G = nx.DiGraph()
+        G.add_node("Input",    level=0)
+        G.add_node("CFA",      level=1)
+        G.add_node("PDA",      level=1)
+        G.add_node("∩ Gate",   level=2)
+        G.add_node("Language", level=3)
+        G.add_node("Result",   level=4)
 
-    # ── painting ────────────────────────────────────────────────────────
+        G.add_edge("Input",    "CFA",        label="regular")
+        G.add_edge("Input",    "PDA",        label="context-free")
+        G.add_edge("CFA",      "∩ Gate", label=self._edge_label(self.dfa_status))
+        G.add_edge("PDA",      "∩ Gate", label=self._edge_label(self.pda_status))
+        G.add_edge("∩ Gate",   "Language",  label="")
+        G.add_edge("Language", "Result",     label="")
 
-    def paintEvent(self, event):
-        p = QPainter(self)
-        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        gate_label   = self.gate_status    or "∩ Gate"
+        lang_label   = self.language_label or "Language"
+        result_label = self.result_text    or "Result"
 
-        cx = self._cx()
-        spread = self._spread()
-        left_x = cx - spread
-        right_x = cx + spread
+        net = Network(height="100%", width="100%", directed=True, notebook=False, bgcolor=_BG)
+        net.set_options(_OPTIONS)
 
-        pen = QPen(_LINE, 2.0)
-        p.setPen(pen)
+        node_defs = {
+            "Input":      ("Input",      _COL["input"],                     "box",     28),
+            "CFA":        ("CFA (DFA)",  self._status_color(self.dfa_status), "ellipse", 32),
+            "PDA":        ("PDA",        self._status_color(self.pda_status), "ellipse", 32),
+            "∩ Gate": (gate_label,  _COL["gate"],                      "box",     30),
+            "Language":   (lang_label,   _COL["lang"],                      "box",     28),
+            "Result":     (result_label, _COL["result"],                    "box",     30),
+        }
 
-        y_input_bot = self._y(_Y_INPUT_BOT)
-        y_fork = self._y(_Y_FORK)
-        y_funnel_top = self._y(_Y_FUNNEL_TOP)
-        y_funnel_bot = self._y(_Y_FUNNEL_BOT)
-        y_gate_top = self._y(_Y_GATE_TOP)
-        y_gate_bot = self._y(_Y_GATE_BOT)
-        y_lang_top = self._y(_Y_LANG_TOP)
-        y_lang_bot = self._y(_Y_LANG_BOT)
-        y_result_top = self._y(_Y_RESULT_TOP)
-        y_result_bot = self._y(_Y_RESULT_BOT)
-        y_arrow_tip = self._y(_Y_ARROW_TIP)
-
-        # 1. Vertical line from input bottom to fork
-        p.drawLine(QPointF(cx, y_input_bot), QPointF(cx, y_fork))
-
-        # 2. Fork — horizontal bar then two verticals down to funnel tops
-        p.drawLine(QPointF(left_x, y_fork), QPointF(right_x, y_fork))
-        p.drawLine(QPointF(left_x, y_fork), QPointF(left_x, y_funnel_top))
-        p.drawLine(QPointF(right_x, y_fork), QPointF(right_x, y_funnel_top))
-
-        # 3. Funnels (trapezoids)
-        self._draw_funnel(
-            p,
-            left_x,
-            y_funnel_top,
-            y_funnel_bot,
-            _FUNNEL_DFA,
-            "DFA",
-            self.dfa_status,
-        )
-        self._draw_funnel(
-            p,
-            right_x,
-            y_funnel_top,
-            y_funnel_bot,
-            _FUNNEL_PDA,
-            "PDA",
-            self.pda_status,
-        )
-
-        # 4. Lines from funnel bottoms converging to gate
-        p.setPen(pen)
-        p.drawLine(QPointF(left_x, y_funnel_bot), QPointF(cx, y_gate_top))
-        p.drawLine(QPointF(right_x, y_funnel_bot), QPointF(cx, y_gate_top))
-
-        # 5. Intersection gate
-        self._draw_gate(p, cx, y_gate_top, y_gate_bot)
-
-        # 6. Line from gate to language label box
-        p.setPen(pen)
-        p.drawLine(QPointF(cx, y_gate_bot), QPointF(cx, y_lang_top))
-
-        # 7. Language label box (shows the intersection language name)
-        self._draw_language_label(p, cx, y_lang_top, y_lang_bot)
-
-        # 8. Line from language label to result box
-        p.setPen(pen)
-        p.drawLine(QPointF(cx, y_lang_bot), QPointF(cx, y_result_top))
-
-        # 9. Result box
-        result_rect = QRectF(
-            cx - min(self.width() * 0.45, 380) / 2,
-            y_result_top,
-            min(self.width() * 0.45, 380),
-            y_result_bot - y_result_top,
-        )
-        self._draw_result_box(p, result_rect)
-
-        # 10. Arrow from result box down toward super PDA
-        self._draw_arrow(p, QPointF(cx, y_result_bot), QPointF(cx, y_arrow_tip))
-
-        p.end()
-
-    # ── drawing helpers ──────────────────────────────────────────────────
-
-    def _draw_funnel(
-        self,
-        p: QPainter,
-        cx: float,
-        top_y: float,
-        bot_y: float,
-        color: QColor,
-        label: str,
-        status: bool | None,
-    ):
-        half_top = 38
-        half_bot = 10
-        path = QPainterPath()
-        path.moveTo(cx - half_top, top_y)
-        path.lineTo(cx + half_top, top_y)
-        path.lineTo(cx + half_bot, bot_y)
-        path.lineTo(cx - half_bot, bot_y)
-        path.closeSubpath()
-
-        grad = QLinearGradient(cx, top_y, cx, bot_y)
-        grad.setColorAt(0, color.lighter(130))
-        grad.setColorAt(1, color.darker(130))
-        p.setBrush(QBrush(grad))
-
-        border_color = (
-            QColor("#5CB85C")
-            if status is True
-            else (QColor("#E74C3C") if status is False else color.darker(150))
-        )
-        p.setPen(QPen(border_color, 2))
-        p.drawPath(path)
-
-        # Label
-        p.setPen(_LABEL)
-        font = QFont("sans-serif", 10, QFont.Weight.Bold)
-        p.setFont(font)
-        p.drawText(
-            QRectF(cx - half_top, top_y, half_top * 2, bot_y - top_y),
-            Qt.AlignmentFlag.AlignCenter,
-            label,
-        )
-
-    def _draw_gate(self, p: QPainter, cx: float, top_y: float, bot_y: float):
-        w = 100
-        rect = QRectF(cx - w / 2, top_y, w, bot_y - top_y)
-        p.setBrush(QBrush(_GATE_BG))
-        p.setPen(QPen(_GATE_BORDER, 2))
-        p.drawRoundedRect(rect, 6, 6)
-
-        p.setPen(QColor("#ffffff"))
-        font = QFont("sans-serif", 11, QFont.Weight.Bold)
-        p.setFont(font)
-        label = self.gate_status if self.gate_status else "\u2229 Gate"
-        p.drawText(rect, Qt.AlignmentFlag.AlignCenter, label)
-
-    def _draw_language_label(self, p: QPainter, cx: float, top_y: float, bot_y: float):
-        """Draw a box showing which intersection language was selected."""
-        w = min(self.width() * 0.50, 400)
-        rect = QRectF(cx - w / 2, top_y, w, bot_y - top_y)
-
-        if self.language_label:
-            p.setBrush(QBrush(_LANG_LABEL_BG))
-            p.setPen(QPen(_LANG_LABEL_BORDER, 1.5))
-            p.drawRoundedRect(rect, 5, 5)
-
-            # Title line
-            p.setPen(QColor("#8899bb"))
-            font_sm = QFont("sans-serif", 9)
-            p.setFont(font_sm)
-            title_rect = QRectF(
-                rect.x(), rect.y() + 2, rect.width(), (rect.height() / 2) - 2
-            )
-            p.drawText(
-                title_rect,
-                Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom,
-                "Intersection Language",
+        for node_id, (label, color, shape, size) in node_defs.items():
+            net.add_node(
+                node_id,
+                label=label,
+                color=color,
+                shape=shape,
+                size=size,
+                level=G.nodes[node_id]["level"],
             )
 
-            # Language name
-            p.setPen(QColor("#ffffff"))
-            font_lg = QFont("sans-serif", 13, QFont.Weight.Bold)
-            p.setFont(font_lg)
-            val_rect = QRectF(
-                rect.x(),
-                rect.y() + rect.height() / 2,
-                rect.width(),
-                rect.height() / 2 - 2,
-            )
-            p.drawText(
-                val_rect,
-                Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop,
-                self.language_label,
-            )
-        else:
-            # No selection yet — dim placeholder
-            p.setPen(QColor("#555555"))
-            font = QFont("sans-serif", 10)
-            p.setFont(font)
-            p.drawText(
-                rect, Qt.AlignmentFlag.AlignCenter, "Select both languages above"
-            )
+        for u, v, data in G.edges(data=True):
+            net.add_edge(u, v, label=data.get("label", ""))
 
-    def _draw_result_box(self, p: QPainter, rect: QRectF):
-        p.setBrush(QBrush(_RESULT_BG))
-        p.setPen(QPen(_RESULT_BORDER, 1.5))
-        p.drawRoundedRect(rect, 5, 5)
+        tmp = os.path.join(self._out_dir, "_tmp.html")
+        net.save_graph(tmp)
+        with open(tmp, "r", encoding="utf-8") as f:
+            html = f.read()
 
-        p.setPen(QColor("#e0e0e0"))
-        font = QFont("monospace", 11)
-        p.setFont(font)
-        text = self.result_text if self.result_text else "(no match)"
-        p.drawText(rect, Qt.AlignmentFlag.AlignCenter, text)
+        # Swap CDN vis.js reference for local offline copy
+        html = re.sub(
+            r"<script[^>]*cdnjs\.cloudflare\.com/ajax/libs/vis-network[^>]*></script>",
+            '<script src="vis-network.min.js"></script>',
+            html,
+        )
 
-    def _draw_arrow(self, p: QPainter, start: QPointF, end: QPointF):
-        p.setPen(QPen(_ARROW, 2))
-        p.drawLine(start, end)
-        # Arrowhead
-        head_size = 8
-        p.setBrush(QBrush(_ARROW))
-        p.setPen(Qt.PenStyle.NoPen)
-        path = QPainterPath()
-        path.moveTo(end)
-        path.lineTo(end.x() - head_size / 2, end.y() - head_size)
-        path.lineTo(end.x() + head_size / 2, end.y() - head_size)
-        path.closeSubpath()
-        p.drawPath(path)
+        html = html.replace(
+            "<body>",
+            "<body style='margin:0;padding:0;background:#1a1a2a;height:100vh;overflow:hidden'>",
+            1,
+        )
+        html = html.replace("</head>", _STYLE_INJECT + "</head>", 1)
+
+        with open(self._html_path, "w", encoding="utf-8") as f:
+            f.write(html)
+
+        self.web_view.load(QUrl.fromLocalFile(self._html_path))
