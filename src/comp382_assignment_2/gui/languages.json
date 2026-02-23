@@ -1,0 +1,75 @@
+{
+  "regular_languages": {
+    "a_star_b_star": {
+      "label": "a*b* — zero or more a's followed by zero or more b's",
+      "pattern": "a*b*",
+      "regex": "^a*b*$"
+    },
+    "a_b_star_a": {
+      "label": "ab*a — one a, zero or more b's, one a",
+      "pattern": "ab*a",
+      "regex": "^ab*a$"
+    },
+    "a_star": {
+      "label": "a* — zero or more a's",
+      "pattern": "a*",
+      "regex": "^a*$"
+    }
+  },
+
+  "context_free_languages": {
+    "an_bn": {
+      "label": "aⁿbⁿ — equal a's then b's (n≥1)",
+      "pattern": "aⁿbⁿ"
+    },
+    "a_bn_a": {
+      "label": "abⁿa — one a, n b's, one a (n≥0)",
+      "pattern": "abⁿa"
+    },
+    "bn": {
+      "label": "bⁿ — one or more b's",
+      "pattern": "bⁿ"
+    }
+  },
+
+  "intersection_map": {
+    "a_star_b_star__an_bn": "an_bn",
+    "a_star_b_star__a_bn_a": "aa",
+    "a_star_b_star__bn": "bn",
+
+    "a_b_star_a__an_bn": "empty",
+    "a_b_star_a__a_bn_a": "a_bn_a",
+    "a_b_star_a__bn": "empty",
+
+    "a_star__an_bn": "empty",
+    "a_star__a_bn_a": "aa",
+    "a_star__bn": "empty"
+  },
+
+  "intersection_matrix": {
+    "_comment": "Rows = DFA key, Cols = CFL key, Value = SuperPDA config key",
+    "a_star_b_star": {
+      "an_bn":  "an_bn",
+      "a_bn_a": "aa",
+      "bn":     "bn"
+    },
+    "a_b_star_a": {
+      "an_bn":  "empty",
+      "a_bn_a": "a_bn_a",
+      "bn":     "empty"
+    },
+    "a_star": {
+      "an_bn":  "empty",
+      "a_bn_a": "aa",
+      "bn":     "empty"
+    }
+  },
+
+  "intersection_labels": {
+    "an_bn": "aⁿbⁿ",
+    "a_bn_a": "abⁿa",
+    "aa": "{aa}",
+    "bn": "bⁿ",
+    "empty": "∅ (empty)"
+  }
+}

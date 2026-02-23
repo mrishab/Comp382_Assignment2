@@ -1,19 +1,3 @@
-"""
-flow_diagram.py — Pipeline diagram rendered with NetworkX + Pyvis in a QWebEngineView.
-
-Shows the data-flow pipeline:
-
-    Input
-    /   \
-  CFA   PDA
-    \   /
-  ∩ Gate
-     |
- Language
-     |
-  Result
-"""
-
 import os
 import re
 import shutil

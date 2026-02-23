@@ -1,11 +1,13 @@
 import json
 import os
 
+_GUI_DIR = os.path.dirname(__file__)
+
 
 class AppConfig:
     def __init__(self):
-        json_path = os.path.join(os.path.dirname(__file__), "strings/en.json")
-        self.set_attributes_from_json(json_path)
+        self.set_attributes_from_json(os.path.join(_GUI_DIR, "strings/en.json"))
+        self.set_attributes_from_json(os.path.join(_GUI_DIR, "languages.json"))
 
         # Window dimensions
         self.window_width = 1400

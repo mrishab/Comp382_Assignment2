@@ -1,45 +1,16 @@
 import re
-from PySide6.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLabel,
-    QComboBox,
-    QPushButton,
-    QFrame,
-)
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import QWidget, QVBoxLayout
+from PySide6.QtCore import QTimer
 
 from comp382_assignment_2.gui.app_config import AppConfig
 from comp382_assignment_2.gui.header import Header
 from comp382_assignment_2.gui.utils import load_stylesheet
-from comp382_assignment_2.gui.flow_diagram import FlowDiagram
-from comp382_assignment_2.gui.validated_line_edit import ValidatedLineEdit
-from comp382_assignment_2.gui.virtual_keyboard import VirtualKeyboard
-from comp382_assignment_2.common.symbols import STRING_SYMBOLS
 from comp382_assignment_2.pda.pda_loader import load_pda
 from comp382_assignment_2.gui.content_panel import ContentPanel
-from comp382_assignment_2.gui.pushdown_automata.pushdown_automata_view import (
-    PushdownAutomataView,
-)
 from comp382_assignment_2.gui.pushdown_automata.pushdown_automata_controller import (
     PushdownAutomataController,
 )
 
-
-_DFA_PATTERNS = {
-    "a_star_b_star": r"^a*b*$",
-    "a_b_star_a": r"^ab*a$",
-    "a_star": r"^a*$",
-}
-
-_BTN_STYLE = (
-    "QPushButton { background:#495057; color:white; border:1px solid #6c757d; "
-    "border-radius:5px; font-size:13px; font-weight:bold; padding: 0 12px; }"
-    "QPushButton:hover { background:#6c757d; }"
-    "QPushButton:pressed { background:#343a40; }"
-    "QPushButton:disabled { background:#333; color:#666; border-color:#444; }"
-)
 
 
 class MainPanel(QWidget):
@@ -81,121 +52,19 @@ class MainPanel(QWidget):
         self.keyboard = content.left.language_builder.input_bar.keyboard
         self.flow = content.left.flow
 
-        # Aliases from right panel
-        self.lang_badge = content.right.lang_badge
-        self.status_label = content.right.status_label
-        self.placeholder_label = content.right.placeholder_label
-        self.pda_view = content.right.pda_view
-        self.empty_label = content.right.empty_label
-        self.sim_btn = content.right.sim_btn
-        self.step_btn = content.right.step_btn
-        self.reset_btn = content.right.reset_btn
+        # Right panel — interact through its public API only
+        self.right_panel = content.right
+        self.pda_view = content.right.pda_view   # _CombinedView (drives graph + stack)
 
         # Wire signals
         self.reg_dropdown.currentIndexChanged.connect(self._on_dropdown_changed)
         self.cfl_dropdown.currentIndexChanged.connect(self._on_dropdown_changed)
         self.input_field.textChanged.connect(self._on_input_changed)
-        self.sim_btn.clicked.connect(self._on_run_simulation)
-        self.step_btn.clicked.connect(self._on_step)
-        self.reset_btn.clicked.connect(self._on_reset)
+        content.right.sim_btn.clicked.connect(self._on_run_simulation)
+        content.right.step_btn.clicked.connect(self._on_step)
+        content.right.reset_btn.clicked.connect(self._on_reset)
 
         self._update_buttons_enabled()
-
-    # ── left panel ───────────────────────────────────────────────────────
-
-    def _build_left_panel(self) -> QFrame:
-
-        # -- Virtual keyboard -------------------------------------------------
-        self.keyboard = VirtualKeyboard(STRING_SYMBOLS, self.input_field)
-        layout.addWidget(self.keyboard)
-
-        # -- Flow diagram (fills remaining space) -----------------------------
-        self.flow = FlowDiagram()
-        self.flow.setMinimumHeight(160)
-        layout.addWidget(self.flow, stretch=1)
-
-        return panel
-
-    # ── right panel ──────────────────────────────────────────────────────
-
-    def _build_right_panel(self) -> QFrame:
-        panel = QFrame()
-        panel.setObjectName("PdaContainer")
-        layout = QVBoxLayout(panel)
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(6)
-
-        # -- Header row -------------------------------------------------------
-        header_row = QHBoxLayout()
-        title = QLabel(self.app_config.super_pda_label)
-        title.setStyleSheet("color: #ddd; font-size: 14px; font-weight: bold;")
-        header_row.addWidget(title)
-
-        # Intersection language badge (shows e.g. "aⁿbⁿ")
-        self.lang_badge = QLabel("")
-        self.lang_badge.setStyleSheet(
-            "color: #80c0ff; font-size: 13px; font-weight: bold; "
-            "padding: 2px 10px; border: 1px solid #4A90D9; border-radius: 3px; "
-            "background: #1e2a3e;"
-        )
-        self.lang_badge.setVisible(False)
-        header_row.addWidget(self.lang_badge)
-
-        header_row.addStretch()
-
-        self.status_label = QLabel(self.app_config.status_idle)
-        self.status_label.setStyleSheet(
-            "color: #888; font-size: 12px; padding: 2px 8px; "
-            "border: 1px solid #444; border-radius: 3px;"
-        )
-        header_row.addWidget(self.status_label)
-        layout.addLayout(header_row)
-
-        # -- Placeholder (shown until both dropdowns are selected) ------------
-        self.placeholder_label = QLabel(
-            "Select a Regular Language and a CFL\nto construct the Super PDA"
-        )
-        self.placeholder_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.placeholder_label.setStyleSheet(
-            "color: #888; font-size: 16px; font-style: italic; "
-            "background: #1a1a2a; border: 2px dashed #444; "
-            "border-radius: 10px; padding: 40px;"
-        )
-        layout.addWidget(self.placeholder_label, stretch=1)
-
-        # -- PDA PyVis view (hidden until a valid PDA is loaded) --------------
-        self.pda_view = PushdownAutomataView()
-        self.pda_view.setVisible(False)
-        layout.addWidget(self.pda_view, stretch=1)
-
-        # -- Empty language overlay (hidden by default) -----------------------
-        self.empty_label = QLabel(self.app_config.empty_language_message)
-        self.empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.empty_label.setStyleSheet(
-            "color: #E74C3C; font-size: 18px; font-weight: bold; "
-            "background: #1a1a2a; border: 2px dashed #E74C3C; "
-            "border-radius: 10px; padding: 40px;"
-        )
-        self.empty_label.setVisible(False)
-        layout.addWidget(self.empty_label, stretch=1)
-
-        # -- Control buttons --------------------------------------------------
-        btn_row = QHBoxLayout()
-        btn_row.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.sim_btn = QPushButton(self.app_config.run_simulation_btn)
-        self.step_btn = QPushButton(self.app_config.step_btn)
-        self.reset_btn = QPushButton(self.app_config.reset_btn)
-
-        for btn in (self.sim_btn, self.step_btn, self.reset_btn):
-            btn.setFixedHeight(34)
-            btn.setMinimumWidth(100)
-            btn.setStyleSheet(_BTN_STYLE)
-            btn_row.addWidget(btn)
-
-        layout.addLayout(btn_row)
-
-        return panel
 
     # ── slot handlers ────────────────────────────────────────────────────
 
@@ -236,7 +105,7 @@ class MainPanel(QWidget):
             return
 
         # DFA check (visual feedback only)
-        dfa_pattern = _DFA_PATTERNS.get(reg_key, "")
+        dfa_pattern = self.app_config.regular_languages.get(reg_key, {}).get("regex", "")
         dfa_accept = bool(re.match(dfa_pattern, text)) if dfa_pattern else False
         self.flow.dfa_status = dfa_accept
 
@@ -339,18 +208,11 @@ class MainPanel(QWidget):
         """Update the language label in both the flow diagram and right panel badge."""
         self.flow.language_label = label
         self.flow.update()
-
-        if label:
-            self.lang_badge.setText(f"L = {label}")
-            self.lang_badge.setVisible(True)
-        else:
-            self.lang_badge.setVisible(False)
+        self.right_panel.set_lang_label(label)
 
     def _set_view_mode(self, mode: str):
         """Switch the right panel between 'placeholder', 'empty', and 'pda'."""
-        self.placeholder_label.setVisible(mode == "placeholder")
-        self.empty_label.setVisible(mode == "empty")
-        self.pda_view.setVisible(mode == "pda")
+        self.right_panel.set_mode(mode)
 
     def _test_cfl_acceptance(self, cfl_key: str, text: str) -> bool:
         """Test if text is accepted by the raw CFL PDA (for visual feedback)."""
@@ -380,38 +242,20 @@ class MainPanel(QWidget):
         self._sim_timer.stop()
 
     def _update_status(self, text: str):
-        self.status_label.setText(text)
-        color_map = {
-            self.app_config.status_accepted: "#5CB85C",
-            self.app_config.status_rejected: "#E74C3C",
-            self.app_config.status_running: "#FFD700",
-        }
-        color = color_map.get(text, "#888")
-        self.status_label.setStyleSheet(
-            f"color: {color}; font-size: 12px; padding: 2px 8px; "
-            f"border: 1px solid {color}; border-radius: 3px;"
-        )
+        self.right_panel.set_status(text)
 
     def _update_buttons_enabled(self):
-        has_ctrl = self._pda_ctrl is not None
-        has_model = self._pda_model is not None
-        has_input = bool(self.input_field.text())
-        sim_running = self._sim_timer.isActive()
+        has_ctrl      = self._pda_ctrl is not None
+        has_model     = self._pda_model is not None
+        has_input     = bool(self.input_field.text())
+        sim_running   = self._sim_timer.isActive()
         is_empty_lang = self._pda_config_key == "empty"
 
-        can_run = (
-            has_ctrl
-            and has_model
-            and has_input
-            and not sim_running
-            and not is_empty_lang
-        )
-        finished = (
-            has_model and (self._pda_model.is_accepted() or self._pda_model.is_stuck())
-            if has_model
-            else False
-        )
+        can_run  = has_ctrl and has_model and has_input and not sim_running and not is_empty_lang
+        finished = has_model and (self._pda_model.is_accepted() or self._pda_model.is_stuck())
 
-        self.sim_btn.setEnabled(can_run)
-        self.step_btn.setEnabled(can_run and not finished)
-        self.reset_btn.setEnabled(has_ctrl and has_input and not is_empty_lang)
+        self.right_panel.set_buttons_enabled(
+            sim=can_run,
+            step=can_run and not finished,
+            reset=has_ctrl and has_input and not is_empty_lang,
+        )
