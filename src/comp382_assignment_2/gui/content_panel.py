@@ -1,12 +1,11 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout
+from PySide6.QtWidgets import QWidget, QHBoxLayout
 
 from comp382_assignment_2.gui.app_config import AppConfig
-from comp382_assignment_2.gui.language_builder import LangugageBuilder
-from comp382_assignment_2.gui.flow_diagram import FlowDiagram
+from comp382_assignment_2.gui.left_content_panel import LeftContentPanel
+from comp382_assignment_2.gui.right_content_panel import RightContentPanel
 
 
 class ContentPanel(QWidget):
-    """Left panel: language selectors + input bar + flow diagram."""
 
     def __init__(self, app_config: AppConfig, parent=None):
         super().__init__(parent)
@@ -14,14 +13,12 @@ class ContentPanel(QWidget):
         self.setup_ui()
 
     def setup_ui(self):
-        layout = QVBoxLayout(self)
+        layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(6)
+        layout.setSpacing(0)
 
-        self.language_builder = LangugageBuilder(self.app_config)
-        layout.addWidget(self.language_builder)
+        self.left = LeftContentPanel(self.app_config)
+        self.right = RightContentPanel(self.app_config)
 
-        self.flow = FlowDiagram()
-        self.flow.setMinimumHeight(160)
-        layout.addWidget(self.flow, stretch=1)
-        
+        layout.addWidget(self.left, stretch=1)
+        layout.addWidget(self.right, stretch=1)

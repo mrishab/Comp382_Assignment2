@@ -6,7 +6,6 @@ from PySide6.QtWidgets import (
     QLabel,
     QComboBox,
     QPushButton,
-    QSplitter,
     QFrame,
 )
 from PySide6.QtCore import Qt, QTimer
@@ -71,27 +70,26 @@ class MainPanel(QWidget):
         # Header (spans full width)
         root.addWidget(Header(self.app_config))
 
-        # Horizontal splitter: LEFT | RIGHT
-        splitter = QSplitter(Qt.Orientation.Horizontal)
-        splitter.setHandleWidth(5)
-        splitter.setChildrenCollapsible(False)
-
-        # Left panel: language selectors + input + flow diagram
+        # Content area: left | right horizontal layout
         content = ContentPanel(self.app_config)
-        splitter.addWidget(content)
-        splitter.addWidget(self._build_right_panel())
+        root.addWidget(content, stretch=1)
 
-        splitter.setStretchFactor(0, 1)
-        splitter.setStretchFactor(1, 1)
+        # Aliases from left panel
+        self.reg_dropdown = content.left.language_builder.reg_dd
+        self.cfl_dropdown = content.left.language_builder.cfl_dd
+        self.input_field = content.left.language_builder.input_bar.input_field
+        self.keyboard = content.left.language_builder.input_bar.keyboard
+        self.flow = content.left.flow
 
-        root.addWidget(splitter, stretch=1)
-
-        # Grab widget refs from sub-components for signal wiring
-        self.reg_dropdown = content.language_builder.reg_dd
-        self.cfl_dropdown = content.language_builder.cfl_dd
-        self.input_field = content.language_builder.input_bar.input_field
-        self.keyboard = content.language_builder.input_bar.keyboard
-        self.flow = content.flow
+        # Aliases from right panel
+        self.lang_badge = content.right.lang_badge
+        self.status_label = content.right.status_label
+        self.placeholder_label = content.right.placeholder_label
+        self.pda_view = content.right.pda_view
+        self.empty_label = content.right.empty_label
+        self.sim_btn = content.right.sim_btn
+        self.step_btn = content.right.step_btn
+        self.reset_btn = content.right.reset_btn
 
         # Wire signals
         self.reg_dropdown.currentIndexChanged.connect(self._on_dropdown_changed)
