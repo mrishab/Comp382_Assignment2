@@ -29,9 +29,8 @@ class _CombinedView:
         self._pda   = pda_graph
         self._stack = stack_graph
 
-    def render_graph(self, model):
-        self._pda.render_graph(model)
-        self._stack.update_stack(model.stack)
+    def render_graph(self, config: dict):
+        self._pda.render_graph(config)
 
     def update_state(self, model):
         self._pda.update_state(model)

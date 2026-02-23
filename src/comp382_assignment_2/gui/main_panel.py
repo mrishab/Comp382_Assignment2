@@ -5,7 +5,7 @@ from PySide6.QtCore import QTimer
 from comp382_assignment_2.gui.app_config import AppConfig
 from comp382_assignment_2.gui.header import Header
 from comp382_assignment_2.gui.utils import load_stylesheet
-from comp382_assignment_2.pda.pda_loader import load_pda
+from comp382_assignment_2.pda.pda_loader import load_cfl_pda, load_super_pda, load_super_pda_config
 from comp382_assignment_2.gui.content_panel import ContentPanel
 from comp382_assignment_2.gui.pushdown_automata.pushdown_automata_controller import (
     PushdownAutomataController,
@@ -201,8 +201,9 @@ class MainPanel(QWidget):
             return
 
         self._set_view_mode("pda")
-        self._pda_model = load_pda(pda_config_key)
-        self._pda_ctrl = PushdownAutomataController(self._pda_model, self.pda_view)
+        self._pda_model = load_super_pda(pda_config_key)
+        pda_config = load_super_pda_config(pda_config_key)
+        self._pda_ctrl = PushdownAutomataController(self._pda_model, self.pda_view, pda_config)
 
     def _update_lang_display(self, label: str):
         """Update the language label in both the flow diagram and right panel badge."""
@@ -217,7 +218,7 @@ class MainPanel(QWidget):
     def _test_cfl_acceptance(self, cfl_key: str, text: str) -> bool:
         """Test if text is accepted by the raw CFL PDA (for visual feedback)."""
         try:
-            model = load_pda(cfl_key)
+            model = load_cfl_pda(cfl_key)
             model.load_input(text)
             while not model.is_stuck() and not model.is_accepted():
                 model.step()
@@ -230,7 +231,7 @@ class MainPanel(QWidget):
         if not self._pda_config_key or self._pda_config_key == "empty":
             return False
         try:
-            model = load_pda(self._pda_config_key)
+            model = load_super_pda(self._pda_config_key)
             model.load_input(text)
             while not model.is_stuck() and not model.is_accepted():
                 model.step()

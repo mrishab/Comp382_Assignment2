@@ -1,9 +1,9 @@
 """
-super_pda_graph.py - PDA state-machine visualisation using NetworkX + Pyvis + QWebEngineView.
+super_pda_graph.py - PDA state-machine visualisation using PDABuilder + QWebEngineView.
 
 Public API
 ----------
-render_graph(model)   Full rebuild when the PDA changes (dropdown selection).
+render_graph(config)  Full rebuild from a raw pda.json config dict.
 update_state(model)   Lightweight JS update: recolours nodes + patches info bar.
                       No page reload - uses vis.js DataSet.update() directly.
 """
@@ -14,7 +14,6 @@ import re
 import shutil
 import tempfile
 
-import networkx as nx
 import pyvis
 from pyvis.network import Network
 
@@ -23,19 +22,13 @@ from PySide6.QtWebEngineCore import QWebEnginePage
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
+from comp382_assignment_2.gui.pda_builder import PDABuilder
+
 # ── vis.js local assets ───────────────────────────────────────────────────────
 _PYVIS_LIB = os.path.join(os.path.dirname(pyvis.__file__), "templates", "lib")
 _VIS_DIR   = os.path.join(_PYVIS_LIB, "vis-9.1.2")
 
 _BG = "#1a1a2a"
-
-_COL = {
-    "default": {"background": "#4A90D9", "border": "#2C5F8A"},
-    "active":  {"background": "#FFD700", "border": "#B8860B"},
-    "accept":  {"background": "#5CB85C", "border": "#3A7A3A"},
-    "initial": {"background": "#9B59B6", "border": "#6C3483"},
-    "stuck":   {"background": "#E74C3C", "border": "#922B21"},
-}
 
 _PYVIS_OPTIONS = """{
   "nodes": {
@@ -94,7 +87,8 @@ class SuperPDAGraph(QWidget):
 
         self._html_path = os.path.join(self._out_dir, "pda.html")
         self._page_loaded = False
-        self._model = None      # kept for JS-only updates
+        self._model = None
+        self._builder: PDABuilder | None = None
 
         self.render_empty()     # show blank graph on startup
 
@@ -123,13 +117,20 @@ class SuperPDAGraph(QWidget):
         self._page_loaded = False
         self.web_view.load(QUrl.fromLocalFile(self._html_path))
 
-    def render_graph(self, model):
-        """Full page rebuild. Call when the PDA changes."""
-        self._model = model
-        html = self._build_html(model)
+    def render_graph(self, config: dict):
+        """Full page rebuild from a pda.json config dict."""
+        self._builder = PDABuilder(config)
+        self._model = None
+        net = self._builder.build_pyvis_network(
+            bgcolor=_BG, options=_PYVIS_OPTIONS
+        )
+        tmp = os.path.join(self._out_dir, "_tmp.html")
+        net.save_graph(tmp)
+        with open(tmp, "r", encoding="utf-8") as f:
+            html = f.read()
+        html = self._patch_html(html, info_html="")
         with open(self._html_path, "w", encoding="utf-8") as f:
             f.write(html)
-
         self._page_loaded = False
         try:
             self.web_view.loadFinished.disconnect(self._on_loaded)
@@ -153,10 +154,11 @@ class SuperPDAGraph(QWidget):
             f"<body style='margin:0;padding:0;background:{_BG};'>",
             1,
         )
-        if info_html:
+        if info_html is not None:
+            visibility = "" if info_html else "display:none;"
             bar = (
                 f"<div id='pda-info' style='background:{_BG};color:#eee;font-family:sans-serif;"
-                f"padding:6px 12px;border-top:1px solid #333;font-size:12px;flex:0 0 auto'>"
+                f"padding:6px 12px;border-top:1px solid #333;font-size:12px;flex:0 0 auto;{visibility}'>"
                 f"{info_html}</div>"
             )
             html = html.replace("</body>", bar + "\n</body>", 1)
@@ -186,7 +188,7 @@ class SuperPDAGraph(QWidget):
     def update_state(self, model):
         """Lightweight JS update: recolour nodes + refresh info bar."""
         self._model = model
-        if not self._page_loaded:
+        if not self._page_loaded or self._builder is None:
             return
         self.web_view.page().runJavaScript(self._state_js(model))
 
@@ -202,35 +204,19 @@ class SuperPDAGraph(QWidget):
             self.web_view.loadFinished.disconnect(self._on_loaded)
         except RuntimeError:
             pass
-        if ok and self._model:
+        if ok and self._model and self._builder:
             self.web_view.page().runJavaScript(self._state_js(self._model))
 
-    def _node_color(self, state, model) -> dict:
-        if state == model.current_state:
-            return _COL["stuck"] if model.is_stuck() else (
-                _COL["accept"] if model.is_accepted() else _COL["active"]
-            )
-        if state in model.final_states:
-            return _COL["accept"]
-        if state == model.initial_state:
-            return _COL["initial"]
-        return _COL["default"]
-
-    def _build_nx(self, model):
-        G = nx.MultiDiGraph()
-        for s in model.states:
-            G.add_node(s)
-        edge_labels: dict[tuple, list[str]] = {}
-        _eps = "\u03b5"
-        _arr = "\u2192"
-        for (src, ch, top), trans_list in model.transitions.items():
-            for dst, push in trans_list:
-                push_str = "|".join(push) if push else _eps
-                lbl = f"{ch or _eps},{top or _eps} {_arr} {push_str}"
-                edge_labels.setdefault((src, dst), []).append(lbl)
-        for (u, v), lbls in edge_labels.items():
-            G.add_edge(u, v, label=" | ".join(lbls))
-        return G, edge_labels
+    def _state_js(self, model) -> str:
+        updates = [
+            {"id": s, "color": self._builder.node_color(s, model)}
+            for s in self._builder.states
+        ]
+        info = _esc(self._info_html(model))
+        return (
+            f"if(typeof nodes !== 'undefined'){{ nodes.update({json.dumps(updates)}); }}"
+            f"var el=document.getElementById('pda-info'); if(el){{ el.style.display=''; el.innerHTML='{info}'; }}"
+        )
 
     def _info_html(self, model) -> str:
         consumed  = model.input_string[:model.input_index]  or "(none)"
@@ -250,38 +236,3 @@ class SuperPDAGraph(QWidget):
             f"  <div style='margin-left:auto'>{badge}</div>"
             f"</div>"
         )
-
-    def _state_js(self, model) -> str:
-        updates = [
-            {"id": s, "color": self._node_color(s, model)}
-            for s in model.states
-        ]
-        info = _esc(self._info_html(model))
-        return (
-            f"if(typeof nodes !== 'undefined'){{ nodes.update({json.dumps(updates)}); }}"
-            f"var el=document.getElementById('pda-info'); if(el){{ el.innerHTML='{info}'; }}"
-        )
-
-    def _build_html(self, model) -> str:
-        G, edge_labels = self._build_nx(model)
-
-        net = Network(height="100%", width="100%", directed=True, notebook=False, bgcolor=_BG)
-        net.set_options(_PYVIS_OPTIONS)
-
-        for node in G.nodes():
-            net.add_node(
-                node,
-                label=node,
-                color=self._node_color(node, model),
-                shape="doublecircle" if node in model.final_states else "circle",
-                size=30,
-            )
-        for (u, v), lbls in edge_labels.items():
-            net.add_edge(u, v, label=" | ".join(lbls))
-
-        tmp = os.path.join(self._out_dir, "_tmp.html")
-        net.save_graph(tmp)
-        with open(tmp, "r", encoding="utf-8") as f:
-            html = f.read()
-
-        return self._patch_html(html, self._info_html(model))

@@ -1,0 +1,159 @@
+{
+  "_comment": "All Pushdown Automata machine definitions. Transition format: { from, input (null=ε), stack_top, to, push=[symbols bottom-to-top, empty=pop] }",
+
+  "cfl_pdas": {
+    "_comment": "Raw CFL automata — used for individual CFL acceptance checks (context_free_languages keys in languages.json)",
+
+    "an_bn": {
+      "description": "aⁿbⁿ (n≥1) — equal number of a's followed by equal number of b's",
+      "language": "{ aⁿbⁿ | n ≥ 1 }",
+      "example_strings": ["ab", "aabb", "aaabbb"],
+      "states": ["q0", "q1", "q2"],
+      "alphabet": ["a", "b"],
+      "stack_alphabet": ["A", "Z"],
+      "initial_state": "q0",
+      "initial_stack_symbol": "Z",
+      "final_states": ["q2"],
+      "transitions": [
+        { "from": "q0", "input": "a", "stack_top": "Z", "to": "q0", "push": ["A", "Z"] },
+        { "from": "q0", "input": "a", "stack_top": "A", "to": "q0", "push": ["A", "A"] },
+        { "from": "q0", "input": "b", "stack_top": "A", "to": "q1", "push": [] },
+        { "from": "q1", "input": "b", "stack_top": "A", "to": "q1", "push": [] },
+        { "from": "q1", "input": null,  "stack_top": "Z", "to": "q2", "push": ["Z"] }
+      ]
+    },
+
+    "a_bn_a": {
+      "description": "abⁿa (n≥0) — one leading a, zero or more b's, one trailing a",
+      "language": "{ abⁿa | n ≥ 0 }",
+      "example_strings": ["aa", "aba", "abba", "abbba"],
+      "states": ["q0", "q1", "q2", "q3"],
+      "alphabet": ["a", "b"],
+      "stack_alphabet": ["Z"],
+      "initial_state": "q0",
+      "initial_stack_symbol": "Z",
+      "final_states": ["q3"],
+      "transitions": [
+        { "from": "q0", "input": "a",  "stack_top": "Z", "to": "q1", "push": ["Z"] },
+        { "from": "q1", "input": "b",  "stack_top": "Z", "to": "q1", "push": ["Z"] },
+        { "from": "q1", "input": "a",  "stack_top": "Z", "to": "q2", "push": ["Z"] },
+        { "from": "q2", "input": null, "stack_top": "Z", "to": "q3", "push": ["Z"] }
+      ]
+    },
+
+    "bn": {
+      "description": "bⁿ (n≥1) — one or more b's, no a's",
+      "language": "{ bⁿ | n ≥ 1 }",
+      "example_strings": ["b", "bb", "bbb"],
+      "states": ["q0", "q1", "q2"],
+      "alphabet": ["b"],
+      "stack_alphabet": ["Z"],
+      "initial_state": "q0",
+      "initial_stack_symbol": "Z",
+      "final_states": ["q2"],
+      "transitions": [
+        { "from": "q0", "input": "b",  "stack_top": "Z", "to": "q1", "push": ["Z"] },
+        { "from": "q1", "input": "b",  "stack_top": "Z", "to": "q1", "push": ["Z"] },
+        { "from": "q1", "input": null, "stack_top": "Z", "to": "q2", "push": ["Z"] }
+      ]
+    }
+  },
+
+  "super_pdas": {
+    "_comment": "Intersection SuperPDAs — one per distinct non-empty language in the DFA × CFL matrix (plus the empty sentinel). Keys match intersection_matrix values in languages.json.",
+
+    "an_bn": {
+      "description": "SuperPDA for R1(a*b*) ∩ C1(aⁿbⁿ) = aⁿbⁿ",
+      "source_dfa": "a_star_b_star",
+      "source_cfl": "an_bn",
+      "language": "{ aⁿbⁿ | n ≥ 1 }",
+      "example_strings": ["ab", "aabb", "aaabbb"],
+      "states": ["q0", "q1", "q2"],
+      "alphabet": ["a", "b"],
+      "stack_alphabet": ["A", "Z"],
+      "initial_state": "q0",
+      "initial_stack_symbol": "Z",
+      "final_states": ["q2"],
+      "transitions": [
+        { "from": "q0", "input": "a", "stack_top": "Z", "to": "q0", "push": ["A", "Z"] },
+        { "from": "q0", "input": "a", "stack_top": "A", "to": "q0", "push": ["A", "A"] },
+        { "from": "q0", "input": "b", "stack_top": "A", "to": "q1", "push": [] },
+        { "from": "q1", "input": "b", "stack_top": "A", "to": "q1", "push": [] },
+        { "from": "q1", "input": null,  "stack_top": "Z", "to": "q2", "push": ["Z"] }
+      ]
+    },
+
+    "aa": {
+      "description": "SuperPDA for R1(a*b*) ∩ C2(abⁿa) = {aa}  and  R3(a*) ∩ C2(abⁿa) = {aa}",
+      "source_dfa": "a_star_b_star  |  a_star",
+      "source_cfl": "a_bn_a",
+      "language": "{ aa }",
+      "example_strings": ["aa"],
+      "states": ["q0", "q1", "q2", "q3"],
+      "alphabet": ["a"],
+      "stack_alphabet": ["Z"],
+      "initial_state": "q0",
+      "initial_stack_symbol": "Z",
+      "final_states": ["q3"],
+      "transitions": [
+        { "from": "q0", "input": "a",  "stack_top": "Z", "to": "q1", "push": ["Z"] },
+        { "from": "q1", "input": "a",  "stack_top": "Z", "to": "q2", "push": ["Z"] },
+        { "from": "q2", "input": null, "stack_top": "Z", "to": "q3", "push": ["Z"] }
+      ]
+    },
+
+    "a_bn_a": {
+      "description": "SuperPDA for R2(ab*a) ∩ C2(abⁿa) = abⁿa",
+      "source_dfa": "a_b_star_a",
+      "source_cfl": "a_bn_a",
+      "language": "{ abⁿa | n ≥ 0 }",
+      "example_strings": ["aa", "aba", "abba", "abbba"],
+      "states": ["q0", "q1", "q2", "q3"],
+      "alphabet": ["a", "b"],
+      "stack_alphabet": ["Z"],
+      "initial_state": "q0",
+      "initial_stack_symbol": "Z",
+      "final_states": ["q3"],
+      "transitions": [
+        { "from": "q0", "input": "a",  "stack_top": "Z", "to": "q1", "push": ["Z"] },
+        { "from": "q1", "input": "b",  "stack_top": "Z", "to": "q1", "push": ["Z"] },
+        { "from": "q1", "input": "a",  "stack_top": "Z", "to": "q2", "push": ["Z"] },
+        { "from": "q2", "input": null, "stack_top": "Z", "to": "q3", "push": ["Z"] }
+      ]
+    },
+
+    "bn": {
+      "description": "SuperPDA for R1(a*b*) ∩ C3(bⁿ) = bⁿ",
+      "source_dfa": "a_star_b_star",
+      "source_cfl": "bn",
+      "language": "{ bⁿ | n ≥ 1 }",
+      "example_strings": ["b", "bb", "bbb"],
+      "states": ["q0", "q1", "q2"],
+      "alphabet": ["b"],
+      "stack_alphabet": ["Z"],
+      "initial_state": "q0",
+      "initial_stack_symbol": "Z",
+      "final_states": ["q2"],
+      "transitions": [
+        { "from": "q0", "input": "b",  "stack_top": "Z", "to": "q1", "push": ["Z"] },
+        { "from": "q1", "input": "b",  "stack_top": "Z", "to": "q1", "push": ["Z"] },
+        { "from": "q1", "input": null, "stack_top": "Z", "to": "q2", "push": ["Z"] }
+      ]
+    },
+
+    "empty": {
+      "description": "SuperPDA sentinel for ∅. Covers: R2∩C1, R2∩C3, R3∩C1, R3∩C3 — all produce the empty language.",
+      "source_dfa": "a_b_star_a  |  a_star",
+      "source_cfl": "an_bn  |  bn",
+      "language": "∅",
+      "example_strings": [],
+      "states": ["q0"],
+      "alphabet": [],
+      "stack_alphabet": ["Z"],
+      "initial_state": "q0",
+      "initial_stack_symbol": "Z",
+      "final_states": [],
+      "transitions": []
+    }
+  }
+}

@@ -8,11 +8,11 @@ Uses two-phase rendering:
 
 
 class PushdownAutomataController:
-    def __init__(self, model, view):
+    def __init__(self, model, view, config: dict):
         self.model = model
         self.view = view
-        # Initial full render when a new PDA is loaded
-        self.view.render_graph(self.model)
+        # Full render from the config dict — builds PDABuilder(config) in the view
+        self.view.render_graph(config)
 
     # ── commands ────────────────────────────────────────────────────────────
 
