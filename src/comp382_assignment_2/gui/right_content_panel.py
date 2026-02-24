@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
 
+from comp382_assignment_2.common.colors import Color
 from comp382_assignment_2.gui.app_config import AppConfig
 from comp382_assignment_2.gui.pda_button_panel import PDAButtonPanel
 from comp382_assignment_2.gui.super_pda_view import SuperPDAView
@@ -27,8 +28,8 @@ class RightContentPanel(QWidget):
         self.button_panel = PDAButtonPanel(self.app_config)
         root.addWidget(self.button_panel)
 
-        self.filtered_input_label = QLabel("Filtered Input: --")
-        self.filtered_input_label.setStyleSheet("color:#cfcfcf; font-size:12px;")
+        self.filtered_input_label = QLabel("Filtered Input: idle")
+        self.filtered_input_label.setStyleSheet(f"color:{Color.LABEL_MUTED.value}; font-size:12px;")
         root.addWidget(self.filtered_input_label)
 
         self.super_pda_view = SuperPDAView()

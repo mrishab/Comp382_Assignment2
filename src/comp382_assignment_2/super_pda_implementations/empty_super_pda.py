@@ -1,4 +1,5 @@
 from comp382_assignment_2.super_pda.base import BaseSuperPDA
+from comp382_assignment_2.common.colors import Color
 from comp382_assignment_2.common.status import Status
 
 
@@ -33,8 +34,8 @@ class EmptySuperPDA(BaseSuperPDA):
     def node_color(self, state: str, model=None) -> dict:
         active_state = model.current_state if model is not None else self.current_state
         if state == active_state:
-            return {"background": "#5CB85C", "border": "#3A7A3A"}
-        return {"background": "#4A90D9", "border": "#2C5F8A"}
+            return {"background": Color.NODE_ACCEPTED_BG.value, "border": Color.NODE_ACCEPTED_BORDER.value}
+        return {"background": Color.NODE_DEFAULT_BG.value, "border": Color.NODE_DEFAULT_BORDER.value}
 
     def graph_nodes(self, model=None) -> list[dict]:
         runtime = model or self
@@ -49,7 +50,7 @@ class EmptySuperPDA(BaseSuperPDA):
                         "label": state,
                         "shape": "circle",
                         "size": 30,
-                        "font": {"size": 15, "color": "#ffffff"},
+                        "font": {"size": 15, "color": Color.TEXT_WHITE.value},
                         "x": x,
                         "y": y,
                         "fixed": {"x": True, "y": True},

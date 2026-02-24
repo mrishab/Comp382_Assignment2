@@ -2,15 +2,16 @@ import json
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
+from comp382_assignment_2.common.colors import Color
 from comp382_assignment_2.gui.html_view import VisHtmlView
 from comp382_assignment_2.super_pda.base import BaseSuperPDA
 
-_BG = "#1a1a2a"
+_BG = Color.GRAPH_BACKGROUND_DARK.value
 _STACK_NODE_ID = "__stack_head__"
 
 _OPTIONS = {
     "nodes": {
-        "font": {"size": 15, "color": "#ffffff"},
+        "font": {"size": 15, "color": Color.TEXT_WHITE.value},
         "borderWidth": 3,
         "shadow": {"enabled": True},
     },
@@ -71,7 +72,7 @@ class SuperPDAView(QWidget):
             {
                 "id": _STACK_NODE_ID,
                 "label": f"Stack\n{stack_display}",
-                "color": {"background": "#2a3a55", "border": "#4A90D9"},
+                "color": {"background": "#2a3a55", "border": Color.NODE_DEFAULT_BG.value},
                 "shape": "box",
                 "size": 30,
                 "font": {"size": 13, "color": "#cfe5ff"},

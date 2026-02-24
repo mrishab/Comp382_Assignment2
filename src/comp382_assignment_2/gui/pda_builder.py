@@ -3,20 +3,22 @@ from __future__ import annotations
 import networkx as nx
 from pyvis.network import Network
 
+from comp382_assignment_2.common.colors import Color
+
 # ── default visual tokens ─────────────────────────────────────────────────────
 _EPS = "\u03b5"   # ε
 _ARR = "\u2192"   # →
 
 NODE_COLOURS = {
-    "default": {"background": "#4A90D9", "border": "#2C5F8A"},
-    "active":  {"background": "#FFD700", "border": "#B8860B"},
-    "accept":  {"background": "#5CB85C", "border": "#3A7A3A"},
-    "initial": {"background": "#9B59B6", "border": "#6C3483"},
-    "stuck":   {"background": "#E74C3C", "border": "#922B21"},
+    "default": {"background": Color.NODE_DEFAULT_BG.value, "border": Color.NODE_DEFAULT_BORDER.value},
+    "active":  {"background": Color.NODE_ACTIVE_BG.value, "border": Color.NODE_ACTIVE_BORDER.value},
+    "accept":  {"background": Color.NODE_ACCEPTED_BG.value, "border": Color.NODE_ACCEPTED_BORDER.value},
+    "initial": {"background": Color.NODE_INITIAL_BG.value, "border": Color.NODE_INITIAL_BORDER.value},
+    "stuck":   {"background": Color.NODE_REJECTED_BG.value, "border": Color.NODE_REJECTED_BORDER.value},
 }
 
 _NODE_SIZE   = 30
-_NODE_FONT   = {"size": 15, "color": "#ffffff"}
+_NODE_FONT   = {"size": 15, "color": Color.TEXT_WHITE.value}
 _EDGE_COLOUR = {"color": "#667799"}
 _EDGE_FONT   = {"size": 10, "color": "#dddddd", "strokeWidth": 0}
 
@@ -145,7 +147,7 @@ class PDABuilder:
         self,
         height: str = "100%",
         width: str = "100%",
-        bgcolor: str = "#1a1a2a",
+        bgcolor: str = Color.GRAPH_BACKGROUND_DARK.value,
         options: str | None = None,
         model=None,
     ) -> Network:

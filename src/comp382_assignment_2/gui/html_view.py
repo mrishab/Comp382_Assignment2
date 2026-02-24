@@ -10,6 +10,8 @@ from PySide6.QtWebEngineCore import QWebEnginePage
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
+from comp382_assignment_2.common.colors import Color
+
 # ── vis.js assets bundled with pyvis – loaded once at import time ─────────────
 _PYVIS_LIB = os.path.join(os.path.dirname(pyvis.__file__), "templates", "lib")
 _VIS_DIR   = os.path.join(_PYVIS_LIB, "vis-9.1.2")
@@ -124,7 +126,7 @@ class VisHtmlView(QWidget):
     parent : QWidget | None
     """
 
-    def __init__(self, bg_color: str = "#1a1a2a", parent: QWidget | None = None):
+    def __init__(self, bg_color: str = Color.GRAPH_BACKGROUND_DARK.value, parent: QWidget | None = None):
         super().__init__(parent)
         self._bg = bg_color
 

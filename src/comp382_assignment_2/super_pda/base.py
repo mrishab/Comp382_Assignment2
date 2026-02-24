@@ -3,15 +3,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from comp382_assignment_2.common.colors import Color
+
 _EPS = "ε"
 _ARR = "→"
 
 NODE_COLOURS = {
-    "default": {"background": "#4A90D9", "border": "#2C5F8A"},
-    "active": {"background": "#FFD700", "border": "#B8860B"},
-    "accepted": {"background": "#5CB85C", "border": "#3A7A3A"},
-    "initial": {"background": "#9B59B6", "border": "#6C3483"},
-    "rejected": {"background": "#E74C3C", "border": "#922B21"},
+    "default": {"background": Color.NODE_DEFAULT_BG.value, "border": Color.NODE_DEFAULT_BORDER.value},
+    "active": {"background": Color.NODE_ACTIVE_BG.value, "border": Color.NODE_ACTIVE_BORDER.value},
+    "accepted": {"background": Color.NODE_ACCEPTED_BG.value, "border": Color.NODE_ACCEPTED_BORDER.value},
+    "initial": {"background": Color.NODE_INITIAL_BG.value, "border": Color.NODE_INITIAL_BORDER.value},
+    "rejected": {"background": Color.NODE_REJECTED_BG.value, "border": Color.NODE_REJECTED_BORDER.value},
 }
 
 
@@ -181,7 +183,7 @@ class BaseSuperPDA:
                     "color": self.node_color(state, model),
                     "shape": "doublecircle" if state in self.final_states else "circle",
                     "size": 30,
-                    "font": {"size": 15, "color": "#ffffff"},
+                    "font": {"size": 15, "color": Color.TEXT_WHITE.value},
                     "x": x,
                     "y": y,
                     "fixed": {"x": True, "y": True},
