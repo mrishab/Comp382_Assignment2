@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 _EPS = "ε"
 _ARR = "→"
@@ -37,6 +38,86 @@ class BaseSuperPDA:
     initial_stack_symbol: str = "Z"
     final_states: list[str] = []
     transitions: list[Transition] = []
+
+    def __init__(self):
+        self.reset_runtime()
+
+    def reset_runtime(self) -> None:
+        self.current_state = self.initial_state
+        self.stack: list[str] = [self.initial_stack_symbol]
+        self.input_string = ""
+        self.input_index = 0
+        self.consumed_input = ""
+
+    def load_input(self, input_string: str) -> None:
+        self.reset_runtime()
+        self.input_string = input_string
+
+    def _match_transition(self, input_symbol: str | None) -> Transition | None:
+        stack_top = self.stack[-1] if self.stack else None
+
+        for transition in self.transitions:
+            if transition.source != self.current_state:
+                continue
+            if transition.input_symbol != input_symbol:
+                continue
+            if transition.stack_top is not None and transition.stack_top != stack_top:
+                continue
+            return transition
+
+        for transition in self.transitions:
+            if transition.source != self.current_state:
+                continue
+            if transition.input_symbol is not None:
+                continue
+            if transition.stack_top is not None and transition.stack_top != stack_top:
+                continue
+            return transition
+
+        return None
+
+    def _apply_transition(self, transition: Transition) -> None:
+        if transition.stack_top is not None and self.stack:
+            self.stack.pop()
+
+        for symbol in reversed(transition.push):
+            self.stack.append(symbol)
+
+        self.current_state = transition.target
+
+    def next_step(self, character: str) -> dict[str, Any]:
+        transition = self._match_transition(character)
+        if transition is None:
+            return {
+                "transitioned": False,
+                "consumed": False,
+                "state": self.current_state,
+                "stack": list(self.stack),
+            }
+
+        self._apply_transition(transition)
+
+        consumed = transition.input_symbol is not None
+        if consumed:
+            self.consumed_input += character
+            self.input_index += 1
+
+        return {
+            "transitioned": True,
+            "consumed": consumed,
+            "state": self.current_state,
+            "stack": list(self.stack),
+        }
+
+    def is_accepted(self) -> bool:
+        return self.current_state in self.final_states and self.input_index == len(self.input_string)
+
+    def is_stuck(self) -> bool:
+        current_char = self.input_string[self.input_index] if self.input_index < len(self.input_string) else None
+        return self._match_transition(current_char) is None
+
+    def is_stuck_for(self, character: str) -> bool:
+        return self._match_transition(character) is None
 
     def position_map(self) -> dict[str, tuple[int, int]]:
         spacing = 180

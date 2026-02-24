@@ -24,7 +24,6 @@ class ContentPanelController:
         self._reg_key: str | None = None
         self._cfl_key: str | None = None
         self._pda_config_key: str | None = None
-        self._super_model = None
         self._super_definition: BaseSuperPDA | None = None
 
         self._connect_signals()
@@ -43,7 +42,6 @@ class ContentPanelController:
     def _on_dropdown_changed(self, _index: int):
         self._reg_key = self.language_builder.selected_reg_key()
         self._cfl_key = self.language_builder.selected_cfl_key()
-        self._super_model = None
         self._super_definition = None
 
         if not self._reg_key or not self._cfl_key:
@@ -116,42 +114,54 @@ class ContentPanelController:
         return
 
     def _on_next_clicked(self):
-        if not self._super_model:
+        if not self._super_definition:
             self.right_panel.set_status("--")
             return
 
-        transitioned = self._super_model.step()
-        self.right_panel.super_pda_view.update_state(self._super_model)
-        remaining = self._super_model.input_string[self._super_model.input_index:]
+        remaining = self._super_definition.input_string[self._super_definition.input_index:]
+        if not remaining:
+            if self._super_definition.is_accepted():
+                self.right_panel.set_status("accepted")
+            else:
+                self.right_panel.set_status("rejected")
+            return
+
+        next_char = remaining[0]
+        result = self._super_definition.next_step(next_char)
+        self.right_panel.super_pda_view.update_state(self._super_definition)
+        remaining = self._super_definition.input_string[self._super_definition.input_index:]
         self.right_panel.set_filtered_input_text(remaining)
 
-        if self._super_model.is_accepted():
+        if self._super_definition.is_accepted():
             self.right_panel.set_status("accepted")
-        elif self._super_model.is_stuck() or not transitioned:
+        elif self._super_definition.is_stuck() or not result["transitioned"]:
             self.right_panel.set_status("rejected")
         else:
             self.right_panel.set_status("running")
 
     def _on_reset_clicked(self):
-        if not self._super_model:
+        if not self._super_definition:
             self.right_panel.set_status("--")
             self.right_panel.set_filtered_input_text(self.language_builder.input_field.text())
             return
 
-        self._super_model.load_input(self.language_builder.input_field.text())
+        self._super_definition.load_input(self.language_builder.input_field.text())
         self.right_panel.super_pda_view.reset_state()
-        self.right_panel.set_filtered_input_text(self._super_model.input_string)
-        self.right_panel.set_status("running" if self._super_model.input_string else "--")
+        self.right_panel.super_pda_view.update_state(self._super_definition)
+        self.right_panel.set_filtered_input_text(self._super_definition.input_string)
+        self.right_panel.set_status("running" if self._super_definition.input_string else "--")
 
     def _prepare_super_model(self, text: str):
         if not self._pda_config_key or self._pda_config_key == "empty":
-            self._super_model = None
+            self._super_definition = None
             self.right_panel.set_status("--")
             return
 
-        self._super_model = load_super_pda(self._pda_config_key)
-        self._super_model.load_input(text)
+        if not self._super_definition:
+            self._super_definition = get_super_pda(self._pda_config_key)
+        self._super_definition.load_input(text)
         self.right_panel.super_pda_view.reset_state()
+        self.right_panel.super_pda_view.update_state(self._super_definition)
         self.right_panel.set_status("running" if text else "--")
 
     def _test_cfl_acceptance(self, cfl_key: str, text: str) -> bool:
