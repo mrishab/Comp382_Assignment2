@@ -1,6 +1,7 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QComboBox, QLabel
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QComboBox
 
 from comp382_assignment_2.gui.app_config import AppConfig
+from comp382_assignment_2.gui.label import FieldLabel
 
 
 class CFLDropdown(QWidget):
@@ -14,8 +15,7 @@ class CFLDropdown(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
 
-        label = QLabel(self.app_config.dropdown_cfl_label)
-        label.setStyleSheet("color: #ccc; font-size: 12px;")
+        label = FieldLabel(self.app_config.dropdown_cfl_label)
         layout.addWidget(label)
 
         self.combo = QComboBox()
