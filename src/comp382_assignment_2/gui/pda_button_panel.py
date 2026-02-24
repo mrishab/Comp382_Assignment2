@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QPushButton, QLabel
 
+from comp382_assignment_2.common.status import Status
 from comp382_assignment_2.gui.app_config import AppConfig
 
 _BTN_STYLE = (
@@ -31,22 +32,23 @@ class PDAButtonPanel(QWidget):
 
         layout.addStretch()
 
-        self.status_label = QLabel("--")
+        self.status_label = QLabel(Status.IDLE.value)
         self.status_label.setStyleSheet(
             "color:#888; font-size:12px; padding:2px 8px; "
             "border:1px solid #444; border-radius:3px;"
         )
         layout.addWidget(self.status_label)
 
-    def set_status(self, status: str):
+    def set_status(self, status: str | Status):
         palette = {
-            "accepted": "#5CB85C",
-            "rejected": "#E74C3C",
-            "running": "#FFD700",
-            "--": "#888",
+            Status.ACCEPTED.value: "#5CB85C",
+            Status.REJECTED.value: "#E74C3C",
+            Status.RUNNING.value: "#FFD700",
+            Status.IDLE.value: "#888",
         }
-        colour = palette.get(status.lower(), "#888")
-        self.status_label.setText(status)
+        normalized_status = status.value if isinstance(status, Status) else status.lower()
+        colour = palette.get(normalized_status, "#888")
+        self.status_label.setText(normalized_status)
         self.status_label.setStyleSheet(
             f"color:{colour}; font-size:12px; padding:2px 8px;"
             f"border:1px solid {colour}; border-radius:3px;"

@@ -1,4 +1,5 @@
 from comp382_assignment_2.super_pda.base import BaseSuperPDA
+from comp382_assignment_2.common.status import Status
 
 
 class EmptySuperPDA(BaseSuperPDA):
@@ -18,7 +19,7 @@ class EmptySuperPDA(BaseSuperPDA):
 
     def __init__(self):
         super().__init__()
-        self.machine_status = "running"
+        self.machine_status = Status.RUNNING.value
         self.nodes: list[dict] = []
         self.edges: list[dict] = []
         self.graph_edges()
@@ -26,7 +27,7 @@ class EmptySuperPDA(BaseSuperPDA):
 
     def load_input(self, input_string: str) -> None:
         super().load_input(input_string)
-        self.machine_status = "accept" if input_string == "" else "reject"
+        self.machine_status = Status.ACCEPTED.value if input_string == "" else Status.REJECTED.value
         self.graph_nodes(self)
 
     def node_color(self, state: str, model=None) -> dict:
@@ -67,7 +68,7 @@ class EmptySuperPDA(BaseSuperPDA):
         return self.edges
 
     def next_step(self, character: str):
-        self.machine_status = "reject"
+        self.machine_status = Status.REJECTED.value
         return {
             "transitioned": False,
             "consumed": False,
@@ -77,7 +78,7 @@ class EmptySuperPDA(BaseSuperPDA):
         }
 
     def is_accepted(self) -> bool:
-        return self.machine_status == "accept"
+        return self.machine_status == Status.ACCEPTED.value
 
     def is_stuck(self) -> bool:
-        return self.machine_status == "reject"
+        return self.machine_status == Status.REJECTED.value

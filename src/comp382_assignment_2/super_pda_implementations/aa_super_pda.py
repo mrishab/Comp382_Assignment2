@@ -1,4 +1,5 @@
 from comp382_assignment_2.super_pda.base import BaseSuperPDA, Transition
+from comp382_assignment_2.common.status import Status
 
 
 class AASuperPDA(BaseSuperPDA):
@@ -21,7 +22,7 @@ class AASuperPDA(BaseSuperPDA):
 
     def __init__(self):
         super().__init__()
-        self.machine_status = "running"
+        self.machine_status = Status.RUNNING.value
         self.nodes: list[dict] = []
         self.edges: list[dict] = []
         self.graph_edges()
@@ -65,7 +66,7 @@ class AASuperPDA(BaseSuperPDA):
         return self.edges
 
     def next_step(self, character: str):
-        if self.machine_status in {"accept", "reject"}:
+        if self.machine_status in {Status.ACCEPTED.value, Status.REJECTED.value}:
             return {
                 "transitioned": False,
                 "consumed": False,
@@ -75,7 +76,7 @@ class AASuperPDA(BaseSuperPDA):
             }
 
         if character != "a":
-            self.machine_status = "reject"
+            self.machine_status = Status.REJECTED.value
             return {
                 "transitioned": False,
                 "consumed": False,
@@ -92,15 +93,15 @@ class AASuperPDA(BaseSuperPDA):
         elif self.current_state == "q1":
             self.current_state = "q2"
             transitioned = True
-            self.machine_status = "accept"
+            self.machine_status = Status.ACCEPTED.value
         else:
-            self.machine_status = "reject"
+            self.machine_status = Status.REJECTED.value
 
         if transitioned:
             self.consumed_input += character
             self.input_index += 1
             if self.current_state != "q2":
-                self.machine_status = "running"
+                self.machine_status = Status.RUNNING.value
 
         self.graph_nodes(self)
 

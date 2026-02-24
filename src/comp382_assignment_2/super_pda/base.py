@@ -9,9 +9,9 @@ _ARR = "→"
 NODE_COLOURS = {
     "default": {"background": "#4A90D9", "border": "#2C5F8A"},
     "active": {"background": "#FFD700", "border": "#B8860B"},
-    "accept": {"background": "#5CB85C", "border": "#3A7A3A"},
+    "accepted": {"background": "#5CB85C", "border": "#3A7A3A"},
     "initial": {"background": "#9B59B6", "border": "#6C3483"},
-    "stuck": {"background": "#E74C3C", "border": "#922B21"},
+    "rejected": {"background": "#E74C3C", "border": "#922B21"},
 }
 
 
@@ -153,18 +153,18 @@ class BaseSuperPDA:
         if model is not None:
             if state == model.current_state:
                 if model.is_stuck():
-                    return NODE_COLOURS["stuck"]
+                    return NODE_COLOURS["rejected"]
                 if model.is_accepted():
-                    return NODE_COLOURS["accept"]
+                    return NODE_COLOURS["accepted"]
                 return NODE_COLOURS["active"]
             if state in model.final_states:
-                return NODE_COLOURS["accept"]
+                return NODE_COLOURS["accepted"]
             if state == model.initial_state:
                 return NODE_COLOURS["initial"]
             return NODE_COLOURS["default"]
 
         if state in self.final_states:
-            return NODE_COLOURS["accept"]
+            return NODE_COLOURS["accepted"]
         if state == self.initial_state:
             return NODE_COLOURS["initial"]
         return NODE_COLOURS["default"]

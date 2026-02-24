@@ -44,7 +44,7 @@ class RightContentPanel(QWidget):
         self.super_pda_view.render_empty_language()
 
     def set_filtered_input_text(self, text: str):
-        display = text if text else "--"
+        display = text if text else "idle"
         self.filtered_input_label.setText(f"Filtered Input: {display}")
 
     def set_status(self, status: str):

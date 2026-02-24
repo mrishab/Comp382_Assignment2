@@ -1,4 +1,5 @@
 from comp382_assignment_2.super_pda.base import BaseSuperPDA, Transition
+from comp382_assignment_2.common.status import Status
 
 
 class BnSuperPDA(BaseSuperPDA):
@@ -20,7 +21,7 @@ class BnSuperPDA(BaseSuperPDA):
 
     def __init__(self):
         super().__init__()
-        self.machine_status = "running"
+        self.machine_status = Status.RUNNING.value
         self.nodes: list[dict] = []
         self.edges: list[dict] = []
         self.graph_edges()
@@ -64,7 +65,7 @@ class BnSuperPDA(BaseSuperPDA):
         return self.edges
 
     def next_step(self, character: str):
-        if self.machine_status in {"accept", "reject"}:
+        if self.machine_status in {Status.ACCEPTED.value, Status.REJECTED.value}:
             return {
                 "transitioned": False,
                 "consumed": False,
@@ -74,7 +75,7 @@ class BnSuperPDA(BaseSuperPDA):
             }
 
         if character != "b":
-            self.machine_status = "reject"
+            self.machine_status = Status.REJECTED.value
             return {
                 "transitioned": False,
                 "consumed": False,
@@ -86,10 +87,10 @@ class BnSuperPDA(BaseSuperPDA):
         self.current_state = "q0"
         self.consumed_input += character
         self.input_index += 1
-        self.machine_status = "running"
+        self.machine_status = Status.RUNNING.value
 
         if self.input_index == len(self.input_string):
-            self.machine_status = "accept"
+            self.machine_status = Status.ACCEPTED.value
 
         self.graph_nodes(self)
 
@@ -102,7 +103,7 @@ class BnSuperPDA(BaseSuperPDA):
         }
 
     def is_accepted(self) -> bool:
-        return self.machine_status == "accept" and bool(self.consumed_input)
+        return self.machine_status == Status.ACCEPTED.value and bool(self.consumed_input)
 
     def is_stuck(self) -> bool:
-        return self.machine_status == "reject"
+        return self.machine_status == Status.REJECTED.value

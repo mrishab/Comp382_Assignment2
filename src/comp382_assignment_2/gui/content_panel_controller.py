@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from comp382_assignment_2.common.status import Status
 from comp382_assignment_2.gui.app_config import AppConfig
 from comp382_assignment_2.gui.content_panel_model import ContentPanelModel
 from comp382_assignment_2.matchers.intersection_matchers import (
@@ -67,7 +68,7 @@ class ContentPanelController:
             self.flow.language_label = ""
             self.right_panel.render_placeholder()
             self.right_panel.set_filtered_input_text("")
-            self.right_panel.set_status("--")
+            self.right_panel.set_status(Status.IDLE)
             self.flow.update()
             return
 
@@ -80,11 +81,11 @@ class ContentPanelController:
         if not self.model.pda_config_key:
             self.right_panel.render_placeholder()
             self.right_panel.set_filtered_input_text("")
-            self.right_panel.set_status("--")
+            self.right_panel.set_status(Status.IDLE)
         elif self.model.pda_config_key == "empty":
             self.right_panel.render_empty_language()
             self.right_panel.set_filtered_input_text("")
-            self.right_panel.set_status("rejected")
+            self.right_panel.set_status(Status.REJECTED)
         else:
             self.model.super_definition = get_super_pda(self.model.pda_config_key)
             self.right_panel.render_super_pda(self.model.super_definition)
@@ -95,13 +96,13 @@ class ContentPanelController:
     def on_input_changed(self, text: str):
         self.right_panel.set_filtered_input_text(text)
 
-        if not self._reg_key or not self._cfl_key or not text:
+        if not self.model.reg_key or not self.model.cfl_key or not text:
             self.flow.result_text = ""
             self.flow.gate_status = "∩ Gate"
             if self.model.super_definition and self.model.pda_config_key not in (None, "empty"):
                 self.prepare_super_model(text)
             else:
-                self.right_panel.set_status("--")
+                self.right_panel.set_status(Status.IDLE)
             self.flow.update()
             return
 
@@ -116,15 +117,15 @@ class ContentPanelController:
 
     def on_next_clicked(self):
         if not self.model.super_definition:
-            self.right_panel.set_status("--")
+            self.right_panel.set_status(Status.IDLE)
             return
 
         remaining = self.model.super_definition.input_string[self.model.super_definition.input_index:]
         if not remaining:
             if self.model.super_definition.is_accepted():
-                self.right_panel.set_status("accepted")
+                self.right_panel.set_status(Status.ACCEPTED)
             else:
-                self.right_panel.set_status("rejected")
+                self.right_panel.set_status(Status.REJECTED)
             return
 
         next_char = remaining[0]
@@ -134,15 +135,15 @@ class ContentPanelController:
         self.right_panel.set_filtered_input_text(remaining)
 
         if self.model.super_definition.is_accepted():
-            self.right_panel.set_status("accepted")
+            self.right_panel.set_status(Status.ACCEPTED)
         elif self.model.super_definition.is_stuck() or not result["transitioned"]:
-            self.right_panel.set_status("rejected")
+            self.right_panel.set_status(Status.REJECTED)
         else:
-            self.right_panel.set_status("running")
+            self.right_panel.set_status(Status.RUNNING)
 
     def on_reset_clicked(self):
         if not self.model.super_definition:
-            self.right_panel.set_status("--")
+            self.right_panel.set_status(Status.IDLE)
             self.right_panel.set_filtered_input_text(self.language_builder.input_field.text())
             return
 
@@ -150,12 +151,12 @@ class ContentPanelController:
         self.right_panel.super_pda_view.reset_state()
         self.right_panel.super_pda_view.update_state(self.model.super_definition)
         self.right_panel.set_filtered_input_text(self.model.super_definition.input_string)
-        self.right_panel.set_status("running" if self.model.super_definition.input_string else "--")
+        self.right_panel.set_status(Status.RUNNING if self.model.super_definition.input_string else Status.IDLE)
 
     def prepare_super_model(self, text: str):
         if not self.model.pda_config_key or self.model.pda_config_key == "empty":
             self.model.super_definition = None
-            self.right_panel.set_status("--")
+            self.right_panel.set_status(Status.IDLE)
             return
 
         if not self.model.super_definition:
@@ -163,7 +164,7 @@ class ContentPanelController:
         self.model.super_definition.load_input(text)
         self.right_panel.super_pda_view.reset_state()
         self.right_panel.super_pda_view.update_state(self.model.super_definition)
-        self.right_panel.set_status("running" if text else "--")
+        self.right_panel.set_status(Status.RUNNING if text else Status.IDLE)
 
     def find_longest_intersection_substring(self, text: str) -> str:
         if not self.model.reg_key or not self.model.cfl_key:

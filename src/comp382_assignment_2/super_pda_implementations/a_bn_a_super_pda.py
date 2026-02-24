@@ -1,4 +1,5 @@
 from comp382_assignment_2.super_pda.base import BaseSuperPDA, Transition
+from comp382_assignment_2.common.status import Status
 
 
 class AABNASuperPDA(BaseSuperPDA):
@@ -24,7 +25,7 @@ class AABNASuperPDA(BaseSuperPDA):
 
     def __init__(self):
         super().__init__()
-        self.machine_status = "running"
+        self.machine_status = Status.RUNNING.value
         self.nodes: list[dict] = []
         self.edges: list[dict] = []
         self.graph_edges()
@@ -68,7 +69,7 @@ class AABNASuperPDA(BaseSuperPDA):
         return self.edges
 
     def next_step(self, character: str):
-        if self.machine_status in {"accept", "reject"}:
+        if self.machine_status in {Status.ACCEPTED.value, Status.REJECTED.value}:
             return {
                 "transitioned": False,
                 "consumed": False,
@@ -78,7 +79,7 @@ class AABNASuperPDA(BaseSuperPDA):
             }
 
         if character not in {"a", "b"}:
-            self.machine_status = "reject"
+            self.machine_status = Status.REJECTED.value
             return {
                 "transitioned": False,
                 "consumed": False,
@@ -94,7 +95,7 @@ class AABNASuperPDA(BaseSuperPDA):
                 self.current_state = "q1"
                 transitioned = True
             else:
-                self.machine_status = "reject"
+                self.machine_status = Status.REJECTED.value
         elif self.current_state == "q1":
             if character == "b":
                 self.current_state = "q2"
@@ -102,9 +103,9 @@ class AABNASuperPDA(BaseSuperPDA):
             elif character == "a":
                 self.current_state = "q3"
                 transitioned = True
-                self.machine_status = "accept"
+                self.machine_status = Status.ACCEPTED.value
             else:
-                self.machine_status = "reject"
+                self.machine_status = Status.REJECTED.value
         elif self.current_state == "q2":
             if character == "b":
                 self.current_state = "q2"
@@ -112,17 +113,17 @@ class AABNASuperPDA(BaseSuperPDA):
             elif character == "a":
                 self.current_state = "q3"
                 transitioned = True
-                self.machine_status = "accept"
+                self.machine_status = Status.ACCEPTED.value
             else:
-                self.machine_status = "reject"
+                self.machine_status = Status.REJECTED.value
         else:
-            self.machine_status = "reject"
+            self.machine_status = Status.REJECTED.value
 
         if transitioned:
             self.consumed_input += character
             self.input_index += 1
             if self.current_state != "q3":
-                self.machine_status = "running"
+                self.machine_status = Status.RUNNING.value
 
         self.graph_nodes(self)
 

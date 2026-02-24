@@ -1,4 +1,5 @@
 from comp382_assignment_2.super_pda.base import BaseSuperPDA, Transition
+from comp382_assignment_2.common.status import Status
 
 
 class AnBnSuperPDA(BaseSuperPDA):
@@ -23,7 +24,7 @@ class AnBnSuperPDA(BaseSuperPDA):
 
     def __init__(self):
         super().__init__()
-        self.machine_status = "running"
+        self.machine_status = Status.RUNNING.value
         self.nodes: list[dict] = []
         self.edges: list[dict] = []
         self.graph_edges()
@@ -32,7 +33,7 @@ class AnBnSuperPDA(BaseSuperPDA):
     def load_input(self, input_string: str) -> None:
         super().load_input(input_string)
         self.stack = []
-        self.machine_status = "running"
+        self.machine_status = Status.RUNNING.value
 
     def node_color(self, state: str, model=None) -> dict:
         active_state = model.current_state if model is not None else self.current_state
@@ -72,7 +73,7 @@ class AnBnSuperPDA(BaseSuperPDA):
         return self.edges
 
     def next_step(self, character: str):
-        if self.machine_status in {"accept", "reject"}:
+        if self.machine_status in {Status.ACCEPTED.value, Status.REJECTED.value}:
             return {
                 "transitioned": False,
                 "consumed": False,
@@ -82,7 +83,7 @@ class AnBnSuperPDA(BaseSuperPDA):
             }
 
         if character not in {"a", "b"}:
-            self.machine_status = "reject"
+            self.machine_status = Status.REJECTED.value
             return {
                 "transitioned": False,
                 "consumed": False,
@@ -99,7 +100,7 @@ class AnBnSuperPDA(BaseSuperPDA):
                 self.stack.append("A")
                 transitioned = True
             else:
-                self.machine_status = "reject"
+                self.machine_status = Status.REJECTED.value
         elif self.current_state == "q1":
             if character == "a":
                 self.current_state = "q1"
@@ -110,25 +111,25 @@ class AnBnSuperPDA(BaseSuperPDA):
                 self.stack.pop()
                 transitioned = True
             else:
-                self.machine_status = "reject"
+                self.machine_status = Status.REJECTED.value
         elif self.current_state == "q2":
             if character == "b" and self.stack:
                 self.current_state = "q2"
                 self.stack.pop()
                 transitioned = True
             else:
-                self.machine_status = "reject"
+                self.machine_status = Status.REJECTED.value
         else:
-            self.machine_status = "reject"
+            self.machine_status = Status.REJECTED.value
 
         if transitioned:
             self.consumed_input += character
             self.input_index += 1
 
             if self.input_index == len(self.input_string) and not self.stack:
-                self.machine_status = "accept"
+                self.machine_status = Status.ACCEPTED.value
             else:
-                self.machine_status = "running"
+                self.machine_status = Status.RUNNING.value
 
         self.graph_nodes(self)
 
@@ -141,7 +142,7 @@ class AnBnSuperPDA(BaseSuperPDA):
         }
 
     def is_accepted(self) -> bool:
-        return self.machine_status == "accept"
+        return self.machine_status == Status.ACCEPTED.value
 
     def is_stuck(self) -> bool:
-        return self.machine_status == "reject"
+        return self.machine_status == Status.REJECTED.value
