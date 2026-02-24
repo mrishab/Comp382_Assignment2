@@ -6,6 +6,7 @@ from comp382_assignment_2.gui.html_view import VisHtmlView
 from comp382_assignment_2.gui.pda_builder import PDABuilder
 
 _BG = "#1a1a2a"
+_STACK_NODE_ID = "__stack_head__"
 
 _OPTIONS = {
     "nodes": {
@@ -51,7 +52,21 @@ class SuperPDAView(QWidget):
 
     def render_graph(self, config: dict):
         builder = PDABuilder(config)
-        nodes = builder.build_nodes()
+        stack_symbol = config.get("initial_stack_symbol", "Z")
+        nodes = [
+            {
+                "id": _STACK_NODE_ID,
+                "label": f"Stack\n{stack_symbol}",
+                "color": {"background": "#2a3a55", "border": "#4A90D9"},
+                "shape": "box",
+                "size": 30,
+                "font": {"size": 13, "color": "#cfe5ff"},
+                "x": 0,
+                "y": -450,
+                "fixed": {"x": True, "y": True},
+            },
+            *builder.build_nodes(),
+        ]
         edges = [
             {
                 "from": edge["source"],
