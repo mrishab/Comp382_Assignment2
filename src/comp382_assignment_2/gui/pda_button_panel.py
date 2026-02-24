@@ -42,14 +42,20 @@ class PDAButtonPanel(QWidget):
 
     def set_status(self, status: str | Status):
         palette = {
-            Status.ACCEPTED.value: Color.NODE_ACCEPTED_BG.value,
-            Status.REJECTED.value: Color.NODE_REJECTED_BG.value,
-            Status.RUNNING.value: Color.NODE_ACTIVE_BG.value,
-            Status.IDLE.value: Color.STATUS_IDLE_TEXT.value,
+            Status.ACCEPTED: Color.NODE_ACCEPTED_BG.value,
+            Status.REJECTED: Color.NODE_REJECTED_BG.value,
+            Status.RUNNING: Color.NODE_ACTIVE_BG.value,
+            Status.IDLE: Color.STATUS_IDLE_TEXT.value,
         }
-        normalized_status = status.value if isinstance(status, Status) else status.lower()
+        if isinstance(status, Status):
+            normalized_status = status
+        else:
+            try:
+                normalized_status = Status(status.lower())
+            except ValueError:
+                normalized_status = Status.IDLE
         colour = palette.get(normalized_status, Color.STATUS_IDLE_TEXT.value)
-        self.status_label.setText(normalized_status)
+        self.status_label.setText(normalized_status.value)
         self.status_label.setStyleSheet(
             f"color:{colour}; font-size:12px; padding:2px 8px;"
             f"border:1px solid {colour}; border-radius:3px;"

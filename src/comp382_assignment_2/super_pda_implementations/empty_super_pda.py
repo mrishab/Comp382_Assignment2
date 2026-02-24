@@ -20,7 +20,7 @@ class EmptySuperPDA(BaseSuperPDA):
 
     def __init__(self):
         super().__init__()
-        self.machine_status = Status.RUNNING.value
+        self.machine_status = Status.RUNNING
         self.nodes: list[dict] = []
         self.edges: list[dict] = []
         self.graph_edges()
@@ -28,7 +28,7 @@ class EmptySuperPDA(BaseSuperPDA):
 
     def load_input(self, input_string: str) -> None:
         super().load_input(input_string)
-        self.machine_status = Status.ACCEPTED.value if input_string == "" else Status.REJECTED.value
+        self.machine_status = Status.ACCEPTED if input_string == "" else Status.REJECTED
         self.graph_nodes(self)
 
     def node_color(self, state: str, model=None) -> dict:
@@ -69,7 +69,7 @@ class EmptySuperPDA(BaseSuperPDA):
         return self.edges
 
     def next_step(self, character: str):
-        self.machine_status = Status.REJECTED.value
+        self.machine_status = Status.REJECTED
         return {
             "transitioned": False,
             "consumed": False,
@@ -79,7 +79,7 @@ class EmptySuperPDA(BaseSuperPDA):
         }
 
     def is_accepted(self) -> bool:
-        return self.machine_status == Status.ACCEPTED.value
+        return self.machine_status == Status.ACCEPTED
 
     def is_stuck(self) -> bool:
-        return self.machine_status == Status.REJECTED.value
+        return self.machine_status == Status.REJECTED

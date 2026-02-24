@@ -26,7 +26,7 @@ class AABNASuperPDA(BaseSuperPDA):
 
     def __init__(self):
         super().__init__()
-        self.machine_status = Status.RUNNING.value
+        self.machine_status = Status.RUNNING
         self.nodes: list[dict] = []
         self.edges: list[dict] = []
         self.graph_edges()
@@ -70,7 +70,7 @@ class AABNASuperPDA(BaseSuperPDA):
         return self.edges
 
     def next_step(self, character: str):
-        if self.machine_status in {Status.ACCEPTED.value, Status.REJECTED.value}:
+        if self.machine_status in {Status.ACCEPTED, Status.REJECTED}:
             return {
                 "transitioned": False,
                 "consumed": False,
@@ -80,7 +80,7 @@ class AABNASuperPDA(BaseSuperPDA):
             }
 
         if character not in {"a", "b"}:
-            self.machine_status = Status.REJECTED.value
+            self.machine_status = Status.REJECTED
             return {
                 "transitioned": False,
                 "consumed": False,
@@ -96,7 +96,7 @@ class AABNASuperPDA(BaseSuperPDA):
                 self.current_state = "q1"
                 transitioned = True
             else:
-                self.machine_status = Status.REJECTED.value
+                self.machine_status = Status.REJECTED
         elif self.current_state == "q1":
             if character == "b":
                 self.current_state = "q2"
@@ -104,9 +104,9 @@ class AABNASuperPDA(BaseSuperPDA):
             elif character == "a":
                 self.current_state = "q3"
                 transitioned = True
-                self.machine_status = Status.ACCEPTED.value
+                self.machine_status = Status.ACCEPTED
             else:
-                self.machine_status = Status.REJECTED.value
+                self.machine_status = Status.REJECTED
         elif self.current_state == "q2":
             if character == "b":
                 self.current_state = "q2"
@@ -114,17 +114,17 @@ class AABNASuperPDA(BaseSuperPDA):
             elif character == "a":
                 self.current_state = "q3"
                 transitioned = True
-                self.machine_status = Status.ACCEPTED.value
+                self.machine_status = Status.ACCEPTED
             else:
-                self.machine_status = Status.REJECTED.value
+                self.machine_status = Status.REJECTED
         else:
-            self.machine_status = Status.REJECTED.value
+            self.machine_status = Status.REJECTED
 
         if transitioned:
             self.consumed_input += character
             self.input_index += 1
             if self.current_state != "q3":
-                self.machine_status = Status.RUNNING.value
+                self.machine_status = Status.RUNNING
 
         self.graph_nodes(self)
 
