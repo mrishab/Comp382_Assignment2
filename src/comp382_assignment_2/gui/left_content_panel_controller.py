@@ -9,9 +9,9 @@ class LeftContentPanelController:
         self.language_builder = language_builder
         self.flow = flow
 
-        self.language_builder.reg_dd.currentIndexChanged.connect(self._on_selection_changed)
-        self.language_builder.cfl_dd.currentIndexChanged.connect(self._on_selection_changed)
-        self.language_builder.input_field.textChanged.connect(self._on_input_changed)
+        self.language_builder.reg_dd.currentIndexChanged.connect(self.on_selection_changed)
+        self.language_builder.cfl_dd.currentIndexChanged.connect(self.on_selection_changed)
+        self.language_builder.input_field.textChanged.connect(self.on_input_changed)
 
         self.sync_flow_labels()
 
@@ -21,11 +21,11 @@ class LeftContentPanelController:
         self.flow.input_value = self.language_builder.input_field.text()
         self.flow.update()
 
-    def _on_selection_changed(self, _index: int):
+    def on_selection_changed(self, _index: int):
         self.flow.selected_regex = self.language_builder.selected_reg_label()
         self.flow.selected_cfl = self.language_builder.selected_cfl_label()
         self.flow.update()
 
-    def _on_input_changed(self, text: str):
+    def on_input_changed(self, text: str):
         self.flow.input_value = text
         self.flow.update()
