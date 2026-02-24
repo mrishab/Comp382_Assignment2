@@ -41,14 +41,6 @@ _OPTIONS = """{
 }"""
 
 class FlowDiagram(QWidget):
-    """
-    Pipeline diagram:
-      selected_regex → DFA ──┐
-                              ├→ ∩ Gate → Language → Result
-      selected_cfl   → PDA ──┘       ↑
-                                    Input
-    """
-
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -68,13 +60,6 @@ class FlowDiagram(QWidget):
 
         self.render()
 
-    # ── public API ────────────────────────────────────────────────────────────
-
-    def update(self):
-        """Re-render the pyvis graph (called by main_panel after state changes)."""
-        self.render()
-
-    # ── private ───────────────────────────────────────────────────────────────────
 
     def render(self):
         # ── node labels ──────────────────────────────────────────────────────
@@ -85,12 +70,6 @@ class FlowDiagram(QWidget):
         lang_label   = self.language_label or "Language"
         result_label = self.result_text    or "Result"
 
-        # ── graph topology ───────────────────────────────────────────────────
-        #   Level 0: selected_regex start node,  selected_cfl start node
-        #   Level 1: DFA,                         PDA
-        #   Level 2: ∩ Gate,                      Input
-        #   Level 3: Language (combined)
-        #   Level 4: Result
         G = nx.DiGraph()
         G.add_node("Regex",    level=0)
         G.add_node("CFL",      level=0)
@@ -105,11 +84,10 @@ class FlowDiagram(QWidget):
         G.add_edge("CFL",      "PDA",      label="")
         G.add_edge("DFA",      "∩ Gate",   label="")
         G.add_edge("PDA",      "∩ Gate",   label="")
-        G.add_edge("∩ Gate",   "Language", label="∩")
+        G.add_edge("∩ Gate",   "Language", label="")
         G.add_edge("Input",    "Language", label="")
         G.add_edge("Language", "Result",   label="")
 
-        # ── vis network ──────────────────────────────────────────────────────
         net = Network(height="100%", width="100%", directed=True, notebook=False, bgcolor=_BG)
         net.set_options(_OPTIONS)
 

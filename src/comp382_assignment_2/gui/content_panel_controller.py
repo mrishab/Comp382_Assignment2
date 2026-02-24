@@ -69,7 +69,7 @@ class ContentPanelController:
             self.right_panel.render_placeholder()
             self.right_panel.set_filtered_input_text("")
             self.right_panel.set_status(Status.IDLE)
-            self.flow.update()
+            self.flow.render()
             return
 
         lookup = f"{self.model.reg_key}__{self.model.cfl_key}"
@@ -91,7 +91,7 @@ class ContentPanelController:
             self.right_panel.render_super_pda(self.model.super_definition)
             self.prepare_super_model(self.language_builder.input_field.text())
 
-        self.flow.update()
+        self.flow.render()
 
     def on_input_changed(self, text: str):
         self.right_panel.set_filtered_input_text(text)
@@ -103,7 +103,7 @@ class ContentPanelController:
                 self.prepare_super_model(text)
             else:
                 self.right_panel.set_status(Status.IDLE)
-            self.flow.update()
+            self.flow.render()
             return
 
         longest = self.find_longest_intersection_substring(text)
@@ -113,7 +113,7 @@ class ContentPanelController:
         if self.model.super_definition and self.model.pda_config_key not in (None, "empty"):
             self.prepare_super_model(text)
 
-        self.flow.update()
+        self.flow.render()
 
     def on_next_clicked(self):
         if not self.model.super_definition:

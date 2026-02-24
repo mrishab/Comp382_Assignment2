@@ -19,13 +19,13 @@ class LeftContentPanelController:
         self.flow.selected_regex = self.language_builder.selected_reg_label()
         self.flow.selected_cfl = self.language_builder.selected_cfl_label()
         self.flow.input_value = self.language_builder.input_field.text()
-        self.flow.update()
+        self.flow.render()
 
     def on_selection_changed(self, _index: int):
         self.flow.selected_regex = self.language_builder.selected_reg_label()
         self.flow.selected_cfl = self.language_builder.selected_cfl_label()
-        self.flow.update()
+        self.flow.render()
 
     def on_input_changed(self, text: str):
         self.flow.input_value = text
-        self.flow.update()
+        self.flow.render()
