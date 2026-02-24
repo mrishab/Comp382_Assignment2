@@ -24,4 +24,5 @@ class ContentPanel(QWidget):
         layout.addWidget(self.left, stretch=1)
         layout.addWidget(self.right, stretch=1)
 
+        # Handles communication between left and right panels
         self.controller = ContentPanelController(self.app_config, self)
