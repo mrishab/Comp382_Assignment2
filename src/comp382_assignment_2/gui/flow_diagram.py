@@ -124,7 +124,7 @@ class FlowDiagram(QWidget):
         G.add_edge("DFA",      "∩ Gate",   label=self._edge_label(self.dfa_status))
         G.add_edge("PDA",      "∩ Gate",   label=self._edge_label(self.pda_status))
         G.add_edge("∩ Gate",   "Language", label="∩")
-        G.add_edge("Input",    "Language", label=self.input_value)
+        G.add_edge("Input",    "Language", label="")
         G.add_edge("Language", "Result",   label="")
 
         # ── vis network ──────────────────────────────────────────────────────

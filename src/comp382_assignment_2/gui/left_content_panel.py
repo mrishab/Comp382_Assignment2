@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout
 from comp382_assignment_2.gui.app_config import AppConfig
 from comp382_assignment_2.gui.language_builder import LangugageBuilder
 from comp382_assignment_2.gui.flow_diagram import FlowDiagram
+from comp382_assignment_2.gui.left_content_panel_controller import LeftContentPanelController
 
 
 class LeftContentPanel(QWidget):
@@ -22,3 +23,5 @@ class LeftContentPanel(QWidget):
         self.flow = FlowDiagram()
         self.flow.setMinimumHeight(160)
         layout.addWidget(self.flow, stretch=1)
+
+        self.controller = LeftContentPanelController(self.language_builder, self.flow)

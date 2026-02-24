@@ -25,3 +25,34 @@ class LangugageBuilder(QWidget):  # noqa: N801  (keep original spelling)
         layout.addWidget(self.cfl_dd)
         layout.addWidget(self.input_bar)
         layout.addStretch()
+
+    @property
+    def input_field(self):
+        return self.input_bar.input_field
+
+    @property
+    def keyboard(self):
+        return self.input_bar.keyboard
+
+    def connect_inputs(self, on_dropdown_changed, on_input_changed):
+        self.reg_dd.currentIndexChanged.connect(on_dropdown_changed)
+        self.cfl_dd.currentIndexChanged.connect(on_dropdown_changed)
+        self.input_field.textChanged.connect(on_input_changed)
+
+    def selected_reg_key(self):
+        return self.reg_dd.currentData()
+
+    def selected_cfl_key(self):
+        return self.cfl_dd.currentData()
+
+    def selected_reg_label(self) -> str:
+        key = self.selected_reg_key()
+        if not key:
+            return ""
+        return self.app_config.regular_languages.get(key, {}).get("pattern", "")
+
+    def selected_cfl_label(self) -> str:
+        key = self.selected_cfl_key()
+        if not key:
+            return ""
+        return self.app_config.context_free_languages.get(key, {}).get("pattern", "")
