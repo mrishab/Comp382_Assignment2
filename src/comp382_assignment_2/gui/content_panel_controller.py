@@ -98,7 +98,6 @@ class ContentPanelController:
 
         if not self.model.reg_key or not self.model.cfl_key or not text:
             self.flow.result_text = ""
-            self.flow.gate_status = "∩ Gate"
             if self.model.super_definition and self.model.pda_config_key not in (None, "empty"):
                 self.prepare_super_model(text)
             else:
@@ -107,7 +106,6 @@ class ContentPanelController:
             return
 
         longest = self.find_longest_intersection_substring(text)
-        self.flow.gate_status = "Longest ∩"
         self.flow.result_text = f'"{longest}"' if longest else self.app_config.no_match_text
 
         if self.model.super_definition and self.model.pda_config_key not in (None, "empty"):

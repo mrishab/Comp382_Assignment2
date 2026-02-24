@@ -51,7 +51,6 @@ class FlowDiagram(QWidget):
         layout.addWidget(self.view)
 
         # ── Public state (mutated by main_panel before calling update()) ──────
-        self.gate_status:    str        = ""
         self.result_text:    str        = ""
         self.language_label: str        = ""
         self.selected_regex: str        = ""
@@ -66,7 +65,7 @@ class FlowDiagram(QWidget):
         regex_label  = self.selected_regex or "Regex"
         cfl_label    = self.selected_cfl   or "CFL"
         input_label  = self.input_value    or "Input"
-        gate_label   = self.gate_status    or "∩ Gate"
+        gate_label   = "∩ Gate"
         lang_label   = self.language_label or "Language"
         result_label = self.result_text    or "Result"
 
