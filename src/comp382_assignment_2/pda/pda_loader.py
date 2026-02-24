@@ -12,6 +12,7 @@ super_model = load_super_pda("an_bn")  # intersection SuperPDA for simulation
 import json
 import os
 from comp382_assignment_2.pda.pushdown_automata_model import PushdownAutomataModel
+from comp382_assignment_2.super_pda.registry import get_super_pda, list_super_pda_keys
 
 _CONFIG_PATH = os.path.join(
     os.path.dirname(__file__), "..", "gui", "pda.json"
@@ -63,34 +64,30 @@ def load_super_pda(name: str) -> PushdownAutomataModel:
 
 
 def load_super_pda_config(name: str) -> dict:
-    """Return the raw config dict for a SuperPDA by key (an_bn | aa | a_bn_a | bn | empty)."""
-    data = _load_raw()
-    supers = {k: v for k, v in data["super_pdas"].items() if not k.startswith("_")}
-    if name not in supers:
-        raise KeyError(f"Unknown SuperPDA '{name}'. Available: {list(supers)}")
-    return supers[name]
+    """Return the SuperPDA config dict from class implementation by key."""
+    return get_super_pda(name).to_config()
 
 
 # ── backward-compat shim ───────────────────────────────────────────────────────
 def load_pda(name: str) -> PushdownAutomataModel:
     """Legacy alias: tries super_pdas first, then cfl_pdas."""
     data = _load_raw()
-    supers = {k: v for k, v in data["super_pdas"].items() if not k.startswith("_")}
     cfls   = {k: v for k, v in data["cfl_pdas"].items()   if not k.startswith("_")}
-    if name in supers:
-        return _build_model(supers[name])
+    try:
+        return load_super_pda(name)
+    except KeyError:
+        pass
     if name in cfls:
         return _build_model(cfls[name])
-    raise KeyError(f"Unknown PDA '{name}'. Super: {list(supers)}  CFL: {list(cfls)}")
+    raise KeyError(f"Unknown PDA '{name}'. CFL: {list(cfls)}")
 
 
 def list_pdas() -> dict:
     """Return flat dict of all PDA configs (super_pdas + cfl_pdas) keyed by name."""
     data = _load_raw()
-    result = {}
-    for section in ("super_pdas", "cfl_pdas"):
-        for k, v in data[section].items():
-            if not k.startswith("_"):
-                result[k] = v
+    result = {k: get_super_pda(k).to_config() for k in list_super_pda_keys()}
+    for k, v in data["cfl_pdas"].items():
+        if not k.startswith("_"):
+            result[k] = v
     return result
 

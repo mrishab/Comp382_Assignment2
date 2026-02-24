@@ -2,7 +2,9 @@ import re
 from typing import TYPE_CHECKING
 
 from comp382_assignment_2.gui.app_config import AppConfig
-from comp382_assignment_2.pda.pda_loader import load_cfl_pda, load_super_pda, load_super_pda_config
+from comp382_assignment_2.pda.pda_loader import load_cfl_pda, load_super_pda
+from comp382_assignment_2.super_pda.base import BaseSuperPDA
+from comp382_assignment_2.super_pda.registry import get_super_pda
 
 if TYPE_CHECKING:
     from comp382_assignment_2.gui.content_panel import ContentPanel
@@ -23,7 +25,7 @@ class ContentPanelController:
         self._cfl_key: str | None = None
         self._pda_config_key: str | None = None
         self._super_model = None
-        self._super_config: dict | None = None
+        self._super_definition: BaseSuperPDA | None = None
 
         self._connect_signals()
         self._sync_from_current_ui()
@@ -42,7 +44,7 @@ class ContentPanelController:
         self._reg_key = self.language_builder.selected_reg_key()
         self._cfl_key = self.language_builder.selected_cfl_key()
         self._super_model = None
-        self._super_config = None
+        self._super_definition = None
 
         if not self._reg_key or not self._cfl_key:
             self._pda_config_key = None
@@ -68,9 +70,8 @@ class ContentPanelController:
             self.right_panel.set_filtered_input_text("")
             self.right_panel.set_status("rejected")
         else:
-            pda_config = load_super_pda_config(self._pda_config_key)
-            self._super_config = pda_config
-            self.right_panel.render_super_pda(pda_config)
+            self._super_definition = get_super_pda(self._pda_config_key)
+            self.right_panel.render_super_pda(self._super_definition)
             self._prepare_super_model(self.language_builder.input_field.text())
 
         self.flow.update()
@@ -83,7 +84,7 @@ class ContentPanelController:
             self.flow.pda_status = None
             self.flow.result_text = ""
             self.flow.gate_status = "∩ Gate"
-            if self._super_config and self._pda_config_key not in (None, "empty"):
+            if self._super_definition and self._pda_config_key not in (None, "empty"):
                 self._prepare_super_model(text)
             else:
                 self.right_panel.set_status("--")
@@ -105,7 +106,7 @@ class ContentPanelController:
             self.flow.gate_status = "✗ No Match"
             self.flow.result_text = self.app_config.no_match_text
 
-        if self._super_config and self._pda_config_key not in (None, "empty"):
+        if self._super_definition and self._pda_config_key not in (None, "empty"):
             self._prepare_super_model(text)
 
         self.flow.update()

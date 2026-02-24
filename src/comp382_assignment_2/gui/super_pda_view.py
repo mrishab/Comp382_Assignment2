@@ -3,7 +3,7 @@ import json
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
 from comp382_assignment_2.gui.html_view import VisHtmlView
-from comp382_assignment_2.gui.pda_builder import PDABuilder
+from comp382_assignment_2.super_pda.base import BaseSuperPDA
 
 _BG = "#1a1a2a"
 _STACK_NODE_ID = "__stack_head__"
@@ -21,14 +21,7 @@ _OPTIONS = {
         "arrows": {"to": {"enabled": True, "scaleFactor": 0.8}},
     },
     "physics": {
-        "solver": "forceAtlas2Based",
-        "forceAtlas2Based": {
-            "gravitationalConstant": -80,
-            "centralGravity": 0.01,
-            "springLength": 140,
-            "springConstant": 0.05,
-        },
-        "stabilization": {"iterations": 200, "fit": True},
+        "enabled": False,
     },
 }
 
@@ -42,7 +35,7 @@ class SuperPDAView(QWidget):
         self.graph_view = VisHtmlView(bg_color=_BG)
         layout.addWidget(self.graph_view)
 
-        self._builder: PDABuilder | None = None
+        self._super_pda: BaseSuperPDA | None = None
         self._base_edges: list[dict] = []
         self._stack_symbol: str = "Z"
 
@@ -54,30 +47,23 @@ class SuperPDAView(QWidget):
     def render_empty_language(self):
         self._render_message("∅ (empty language)")
 
-    def render_graph(self, config: dict):
-        self._builder = PDABuilder(config)
-        self._stack_symbol = config.get("initial_stack_symbol", "Z")
-        self._base_edges = [
-            {
-                "from": edge["source"],
-                "to": edge["to"],
-                "label": edge.get("label", ""),
-            }
-            for edge in self._builder.build_edges()
-        ]
-        self._render_nodes(self._builder.build_nodes())
+    def render_graph(self, super_pda: BaseSuperPDA):
+        self._super_pda = super_pda
+        self._stack_symbol = super_pda.initial_stack_symbol
+        self._base_edges = super_pda.graph_edges()
+        self._render_nodes(super_pda.graph_nodes())
 
     def update_state(self, model):
-        if self._builder is None:
+        if self._super_pda is None:
             return
-        nodes = self._builder.build_nodes(model=model)
+        nodes = self._super_pda.graph_nodes(model=model)
         stack_head = model.stack[-1] if model.stack else self._stack_symbol
         self._render_nodes(nodes, stack_head=stack_head)
 
     def reset_state(self):
-        if self._builder is None:
+        if self._super_pda is None:
             return
-        self._render_nodes(self._builder.build_nodes(), stack_head=self._stack_symbol)
+        self._render_nodes(self._super_pda.graph_nodes(), stack_head=self._stack_symbol)
 
     def _render_nodes(self, pda_nodes: list[dict], stack_head: str | None = None):
         stack_display = stack_head or self._stack_symbol
@@ -98,7 +84,7 @@ class SuperPDAView(QWidget):
         self.graph_view.set_graph(nodes, self._base_edges, _OPTIONS)
 
     def _render_message(self, message: str):
-        self._builder = None
+        self._super_pda = None
         self._base_edges = []
         nodes = [{
             "id": "hint",

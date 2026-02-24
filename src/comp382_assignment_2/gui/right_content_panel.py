@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
 from comp382_assignment_2.gui.app_config import AppConfig
 from comp382_assignment_2.gui.pda_button_panel import PDAButtonPanel
 from comp382_assignment_2.gui.super_pda_view import SuperPDAView
+from comp382_assignment_2.super_pda.base import BaseSuperPDA
 
 
 class RightContentPanel(QWidget):
@@ -33,8 +34,8 @@ class RightContentPanel(QWidget):
         self.super_pda_view = SuperPDAView()
         root.addWidget(self.super_pda_view, stretch=1)
 
-    def render_super_pda(self, config: dict):
-        self.super_pda_view.render_graph(config)
+    def render_super_pda(self, super_pda: BaseSuperPDA):
+        self.super_pda_view.render_graph(super_pda)
 
     def render_placeholder(self):
         self.super_pda_view.render_placeholder()
