@@ -42,6 +42,10 @@ class SuperPDAView(QWidget):
         self.graph_view = VisHtmlView(bg_color=_BG)
         layout.addWidget(self.graph_view)
 
+        self._builder: PDABuilder | None = None
+        self._base_edges: list[dict] = []
+        self._stack_symbol: str = "Z"
+
         self.render_placeholder()
 
     def render_placeholder(self):
@@ -51,12 +55,36 @@ class SuperPDAView(QWidget):
         self._render_message("∅ (empty language)")
 
     def render_graph(self, config: dict):
-        builder = PDABuilder(config)
-        stack_symbol = config.get("initial_stack_symbol", "Z")
+        self._builder = PDABuilder(config)
+        self._stack_symbol = config.get("initial_stack_symbol", "Z")
+        self._base_edges = [
+            {
+                "from": edge["source"],
+                "to": edge["to"],
+                "label": edge.get("label", ""),
+            }
+            for edge in self._builder.build_edges()
+        ]
+        self._render_nodes(self._builder.build_nodes())
+
+    def update_state(self, model):
+        if self._builder is None:
+            return
+        nodes = self._builder.build_nodes(model=model)
+        stack_head = model.stack[-1] if model.stack else self._stack_symbol
+        self._render_nodes(nodes, stack_head=stack_head)
+
+    def reset_state(self):
+        if self._builder is None:
+            return
+        self._render_nodes(self._builder.build_nodes(), stack_head=self._stack_symbol)
+
+    def _render_nodes(self, pda_nodes: list[dict], stack_head: str | None = None):
+        stack_display = stack_head or self._stack_symbol
         nodes = [
             {
                 "id": _STACK_NODE_ID,
-                "label": f"Stack\n{stack_symbol}",
+                "label": f"Stack\n{stack_display}",
                 "color": {"background": "#2a3a55", "border": "#4A90D9"},
                 "shape": "box",
                 "size": 30,
@@ -65,19 +93,13 @@ class SuperPDAView(QWidget):
                 "y": -450,
                 "fixed": {"x": True, "y": True},
             },
-            *builder.build_nodes(),
+            *pda_nodes,
         ]
-        edges = [
-            {
-                "from": edge["source"],
-                "to": edge["to"],
-                "label": edge.get("label", ""),
-            }
-            for edge in builder.build_edges()
-        ]
-        self.graph_view.set_graph(nodes, edges, _OPTIONS)
+        self.graph_view.set_graph(nodes, self._base_edges, _OPTIONS)
 
     def _render_message(self, message: str):
+        self._builder = None
+        self._base_edges = []
         nodes = [{
             "id": "hint",
             "label": message,

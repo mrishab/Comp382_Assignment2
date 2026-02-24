@@ -22,12 +22,17 @@ class ContentPanelController:
         self._reg_key: str | None = None
         self._cfl_key: str | None = None
         self._pda_config_key: str | None = None
+        self._super_model = None
+        self._super_config: dict | None = None
 
         self._connect_signals()
         self._sync_from_current_ui()
 
     def _connect_signals(self):
         self.language_builder.connect_inputs(self._on_dropdown_changed, self._on_input_changed)
+        self.right_panel.button_panel.next_btn.clicked.connect(self._on_next_clicked)
+        self.right_panel.button_panel.reset_btn.clicked.connect(self._on_reset_clicked)
+        self.right_panel.button_panel.sim_btn.clicked.connect(self._on_simulate_clicked)
 
     def _sync_from_current_ui(self):
         self._on_dropdown_changed(-1)
@@ -36,11 +41,15 @@ class ContentPanelController:
     def _on_dropdown_changed(self, _index: int):
         self._reg_key = self.language_builder.selected_reg_key()
         self._cfl_key = self.language_builder.selected_cfl_key()
+        self._super_model = None
+        self._super_config = None
 
         if not self._reg_key or not self._cfl_key:
             self._pda_config_key = None
             self.flow.language_label = ""
             self.right_panel.render_placeholder()
+            self.right_panel.set_filtered_input_text("")
+            self.right_panel.set_status("--")
             self.flow.update()
             return
 
@@ -52,20 +61,32 @@ class ContentPanelController:
 
         if not self._pda_config_key:
             self.right_panel.render_placeholder()
+            self.right_panel.set_filtered_input_text("")
+            self.right_panel.set_status("--")
         elif self._pda_config_key == "empty":
             self.right_panel.render_empty_language()
+            self.right_panel.set_filtered_input_text("")
+            self.right_panel.set_status("rejected")
         else:
             pda_config = load_super_pda_config(self._pda_config_key)
+            self._super_config = pda_config
             self.right_panel.render_super_pda(pda_config)
+            self._prepare_super_model(self.language_builder.input_field.text())
 
         self.flow.update()
 
     def _on_input_changed(self, text: str):
+        self.right_panel.set_filtered_input_text(text)
+
         if not self._reg_key or not self._cfl_key or not text:
             self.flow.dfa_status = None
             self.flow.pda_status = None
             self.flow.result_text = ""
             self.flow.gate_status = "∩ Gate"
+            if self._super_config and self._pda_config_key not in (None, "empty"):
+                self._prepare_super_model(text)
+            else:
+                self.right_panel.set_status("--")
             self.flow.update()
             return
 
@@ -84,7 +105,53 @@ class ContentPanelController:
             self.flow.gate_status = "✗ No Match"
             self.flow.result_text = self.app_config.no_match_text
 
+        if self._super_config and self._pda_config_key not in (None, "empty"):
+            self._prepare_super_model(text)
+
         self.flow.update()
+
+    def _on_simulate_clicked(self):
+        # Placeholder action by requirement.
+        return
+
+    def _on_next_clicked(self):
+        if not self._super_model:
+            self.right_panel.set_status("--")
+            return
+
+        transitioned = self._super_model.step()
+        self.right_panel.super_pda_view.update_state(self._super_model)
+        remaining = self._super_model.input_string[self._super_model.input_index:]
+        self.right_panel.set_filtered_input_text(remaining)
+
+        if self._super_model.is_accepted():
+            self.right_panel.set_status("accepted")
+        elif self._super_model.is_stuck() or not transitioned:
+            self.right_panel.set_status("rejected")
+        else:
+            self.right_panel.set_status("running")
+
+    def _on_reset_clicked(self):
+        if not self._super_model:
+            self.right_panel.set_status("--")
+            self.right_panel.set_filtered_input_text(self.language_builder.input_field.text())
+            return
+
+        self._super_model.load_input(self.language_builder.input_field.text())
+        self.right_panel.super_pda_view.reset_state()
+        self.right_panel.set_filtered_input_text(self._super_model.input_string)
+        self.right_panel.set_status("running" if self._super_model.input_string else "--")
+
+    def _prepare_super_model(self, text: str):
+        if not self._pda_config_key or self._pda_config_key == "empty":
+            self._super_model = None
+            self.right_panel.set_status("--")
+            return
+
+        self._super_model = load_super_pda(self._pda_config_key)
+        self._super_model.load_input(text)
+        self.right_panel.super_pda_view.reset_state()
+        self.right_panel.set_status("running" if text else "--")
 
     def _test_cfl_acceptance(self, cfl_key: str, text: str) -> bool:
         try:
