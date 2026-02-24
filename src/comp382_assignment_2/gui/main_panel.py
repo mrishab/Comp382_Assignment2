@@ -12,7 +12,6 @@ from comp382_assignment_2.gui.pushdown_automata.pushdown_automata_controller imp
 )
 
 
-
 class MainPanel(QWidget):
     def __init__(self, app_config: AppConfig, parent=None):
         super().__init__(parent)
