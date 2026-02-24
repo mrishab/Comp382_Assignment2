@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QWidget, QHBoxLayout
 from comp382_assignment_2.gui.app_config import AppConfig
 from comp382_assignment_2.gui.left_content_panel import LeftContentPanel
 from comp382_assignment_2.gui.right_content_panel import RightContentPanel
+from comp382_assignment_2.gui.content_panel_controller import ContentPanelController
 
 
 class ContentPanel(QWidget):
@@ -22,3 +23,5 @@ class ContentPanel(QWidget):
 
         layout.addWidget(self.left, stretch=1)
         layout.addWidget(self.right, stretch=1)
+
+        self.controller = ContentPanelController(self.app_config, self)

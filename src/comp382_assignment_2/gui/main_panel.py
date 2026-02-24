@@ -4,7 +4,6 @@ from comp382_assignment_2.gui.app_config import AppConfig
 from comp382_assignment_2.gui.header import Header
 from comp382_assignment_2.gui.utils import load_stylesheet
 from comp382_assignment_2.gui.content_panel import ContentPanel
-from comp382_assignment_2.gui.language_builder_controller import LanguageBuilderController
 
 
 class MainPanel(QWidget):
@@ -27,12 +26,3 @@ class MainPanel(QWidget):
         # Content area: left | right horizontal layout
         content = ContentPanel(self.app_config)
         root.addWidget(content, stretch=1)
-
-        self.language_builder_controller = LanguageBuilderController(
-            app_config=self.app_config,
-            language_builder=content.left.language_builder,
-            flow=content.left.flow,
-            right_panel=content.right,
-            pda_view=content.right.pda_view,
-            parent=self,
-        )
