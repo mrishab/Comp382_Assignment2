@@ -1,6 +1,6 @@
 import os
-import re
-import tempfile
+import json
+from typing import Any
 
 import pyvis
 from pyvis.network import Network
@@ -23,17 +23,82 @@ def _load_asset(filename: str) -> str:
 _VIS_JS  = _load_asset("vis-network.min.js")
 _VIS_CSS = _load_asset("vis-network.css")
 
-# Inline blocks – built once, reused on every set_html() call.
-_JS_BLOCK  = f"<script>\n{_VIS_JS}\n</script>"
-_CSS_BLOCK = f"<style>\n{_VIS_CSS}\n</style>"
 
-# Regex patterns for CDN references that pyvis/the caller may emit.
-_CDN_SCRIPT_RE = re.compile(
-    r"<script[^>]*cdnjs\.cloudflare\.com[^>]*vis-network[^>]*></script>"
-)
-_CDN_LINK_RE = re.compile(
-    r'<link[^>]*cdnjs\.cloudflare\.com[^>]*vis-network[^>]*/?>',
-)
+def _js_string(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=False)
+
+
+def _extract_options(options: Any) -> dict[str, Any]:
+    if options is None:
+        return {}
+
+    if isinstance(options, dict):
+        return options
+
+    if isinstance(options, str):
+        try:
+            parsed = json.loads(options)
+            return parsed if isinstance(parsed, dict) else {}
+        except json.JSONDecodeError:
+            return {}
+
+    to_json = getattr(options, "to_json", None)
+    if callable(to_json):
+        try:
+            parsed = json.loads(to_json())
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            return {}
+
+    return {}
+
+
+_BASE_HTML = f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset=\"utf-8\" />
+<style>
+html, body {{
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: __BG__;
+}}
+#mynetwork {{
+    width: 100%;
+    height: 100%;
+    background: __BG__;
+}}
+{_VIS_CSS}
+</style>
+<script>
+{_VIS_JS}
+</script>
+</head>
+<body>
+<div id=\"mynetwork\"></div>
+<script>
+window.__network = null;
+
+function renderGraph(nodes, edges, options) {{
+    const container = document.getElementById("mynetwork");
+    const data = {{
+        nodes: new vis.DataSet(nodes),
+        edges: new vis.DataSet(edges)
+    }};
+
+    if (window.__network) {{
+        window.__network.destroy();
+    }}
+
+    window.__network = new vis.Network(container, data, options || {{}});
+}}
+</script>
+</body>
+</html>
+"""
 
 
 class _SilentPage(QWebEnginePage):
@@ -50,13 +115,12 @@ class _SilentPage(QWebEnginePage):
 
 class VisHtmlView(QWidget):
     """
-    Generic widget that renders vis.js-based HTML inside a QWebEngineView.
+    Generic widget that renders vis.js graphs inside a QWebEngineView.
 
     Parameters
     ----------
     bg_color : str
-        CSS colour string used for the Qt page background and the baseline
-        CSS injected into every page (default ``"#1a1a2a"``).
+        CSS colour string used for the Qt page background and graph canvas.
     parent : QWidget | None
     """
 
@@ -72,66 +136,53 @@ class VisHtmlView(QWidget):
         self.web_view.page().setBackgroundColor(QColor(bg_color))
         layout.addWidget(self.web_view)
 
+        self._loaded = False
+        self._pending_graph: tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]] | None = None
+        self.web_view.loadFinished.connect(self._on_load_finished)
+        self.web_view.setHtml(_BASE_HTML.replace("__BG__", self._bg))
+
     # ── public API ────────────────────────────────────────────────────────────
 
-    def set_html(self, raw_html: str, extra_styles: str = "") -> None:
-        """
-        Patch *raw_html* and load it entirely in-memory.
+    def _on_load_finished(self, ok: bool) -> None:
+        self._loaded = ok
+        if ok and self._pending_graph is not None:
+            nodes, edges, options = self._pending_graph
+            self._pending_graph = None
+            self._render_graph(nodes, edges, options)
 
-        Steps
-        -----
-        1. Replace CDN ``<script>`` / ``<link>`` tags with inlined bundles.
-        2. Patch ``<body>`` opening tag with a transparent / bg-colour inline
-           style.
-        3. Inject a ``<style>`` block before ``</head>`` that sets ``html``,
-           ``body``, ``#mynetwork``, ``.vis-network``, and ``canvas`` to fill
-           the viewport with *bg_color*.  Any *extra_styles* CSS rules are
-           appended inside the same block.
-        """
-        html = _CDN_SCRIPT_RE.sub(lambda _: _JS_BLOCK,  raw_html)
-        html = _CDN_LINK_RE.sub(  lambda _: _CSS_BLOCK, html)
-
-        html = html.replace(
-            "<body>",
-            f"<body style='margin:0;padding:0;background:{self._bg};"
-            f"height:100vh;overflow:hidden'>",
-            1,
+    def _render_graph(self, nodes: list[dict[str, Any]], edges: list[dict[str, Any]], options: dict[str, Any]) -> None:
+        js = (
+            "renderGraph("
+            f"{_js_string(nodes)},"
+            f"{_js_string(edges)},"
+            f"{_js_string(options)}"
+            ");"
         )
+        self.web_view.page().runJavaScript(js)
 
-        base_css = (
-            f"  html, body {{ margin:0; padding:0; width:100%; height:100vh;"
-            f" background:{self._bg}; overflow:hidden; }}\n"
-            f"  #mynetwork {{ width:100% !important; height:100vh !important; }}\n"
-            f"  .vis-network {{ background: {self._bg} !important; }}\n"
-            f"  canvas {{ background: {self._bg} !important; }}\n"
-        )
-        extra = (f"  {extra_styles}\n") if extra_styles else ""
-        style_block = f"<style>\n{base_css}{extra}</style>\n"
-
-        html = html.replace("</head>", style_block + "</head>", 1)
-
-        self.web_view.setHtml(html)
-
-    @staticmethod
-    def net_to_html(net: Network) -> str:
+    def set_graph(
+        self,
+        nodes: list[dict[str, Any]],
+        edges: list[dict[str, Any]],
+        options: dict[str, Any] | None = None,
+    ) -> None:
         """
-        Convert a pyvis *Network* to an HTML string without writing to disk.
-
-        Uses ``Network.generate_html()`` when available (pyvis ≥ 0.7).
-        Falls back to a NamedTemporaryFile that is deleted immediately after
-        reading.
+        Render a graph from JSON-serialisable vis-network node/edge data.
         """
-        if hasattr(net, "generate_html"):
-            return net.generate_html()
+        resolved_options = options or {}
+        if self._loaded:
+            self._render_graph(nodes, edges, resolved_options)
+            return
+        self._pending_graph = (nodes, edges, resolved_options)
 
-        fd, tmp_path = tempfile.mkstemp(suffix=".html")
-        os.close(fd)
-        try:
-            net.save_graph(tmp_path)
-            with open(tmp_path, "r", encoding="utf-8") as f:
-                return f.read()
-        finally:
-            os.unlink(tmp_path)
+    def set_graph_from_net(self, net: Network) -> None:
+        """
+        Render a pyvis *Network* without generating or patching HTML.
+        """
+        nodes = list(net.nodes)
+        edges = list(net.edges)
+        options = _extract_options(getattr(net, "options", None))
+        self.set_graph(nodes, edges, options)
 
     def run_js(self, js: str) -> None:
         """Run *js* in the currently loaded page."""

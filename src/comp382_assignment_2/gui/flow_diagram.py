@@ -156,4 +156,4 @@ class FlowDiagram(QWidget):
             net.add_edge(u, v, label=data.get("label", ""))
 
         # ── render via shared HTML view ───────────────────────────────────────
-        self.view.set_html(VisHtmlView.net_to_html(net))
+        self.view.set_graph_from_net(net)
