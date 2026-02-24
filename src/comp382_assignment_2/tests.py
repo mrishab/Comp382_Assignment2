@@ -1,5 +1,5 @@
 """
-demo.py - Comprehensive test suite for all matcher functions
+tests.py - Comprehensive test suite for all matcher functions
 Tests against the exact language definitions from pda_configs.json
 
 """
