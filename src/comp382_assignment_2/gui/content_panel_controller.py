@@ -89,27 +89,29 @@ class ContentPanelController:
         else:
             self.model.super_definition = get_super_pda(self.model.pda_config_key)
             self.right_panel.render_super_pda(self.model.super_definition)
-            self.prepare_super_model(self.language_builder.input_field.text())
+            filtered_text = self.get_filtered_input_text(self.language_builder.input_field.text())
+            self.right_panel.set_filtered_input_text(filtered_text)
+            self.prepare_super_model(filtered_text)
 
         self.flow.render()
 
     def on_input_changed(self, text: str):
-        self.right_panel.set_filtered_input_text(text)
+        filtered_text = self.get_filtered_input_text(text)
+        self.right_panel.set_filtered_input_text(filtered_text)
 
         if not self.model.reg_key or not self.model.cfl_key or not text:
             self.flow.result_text = ""
             if self.model.super_definition and self.model.pda_config_key not in (None, "empty"):
-                self.prepare_super_model(text)
+                self.prepare_super_model(filtered_text)
             else:
                 self.right_panel.set_status(Status.IDLE)
             self.flow.render()
             return
 
-        longest = self.find_longest_intersection_substring(text)
-        self.flow.result_text = f'"{longest}"' if longest else self.app_config.no_match_text
+        self.flow.result_text = f'"{filtered_text}"' if filtered_text else self.app_config.no_match_text
 
         if self.model.super_definition and self.model.pda_config_key not in (None, "empty"):
-            self.prepare_super_model(text)
+            self.prepare_super_model(filtered_text)
 
         self.flow.render()
 
@@ -140,12 +142,14 @@ class ContentPanelController:
             self.right_panel.set_status(Status.RUNNING)
 
     def on_reset_clicked(self):
+        filtered_text = self.get_filtered_input_text(self.language_builder.input_field.text())
+
         if not self.model.super_definition:
             self.right_panel.set_status(Status.IDLE)
-            self.right_panel.set_filtered_input_text(self.language_builder.input_field.text())
+            self.right_panel.set_filtered_input_text(filtered_text)
             return
 
-        self.model.super_definition.load_input(self.language_builder.input_field.text())
+        self.model.super_definition.load_input(filtered_text)
         self.right_panel.super_pda_view.reset_state()
         self.right_panel.super_pda_view.update_state(self.model.super_definition)
         self.right_panel.set_filtered_input_text(self.model.super_definition.input_string)
@@ -173,3 +177,10 @@ class ContentPanelController:
             return ""
 
         return matcher(text)
+
+    def get_filtered_input_text(self, text: str) -> str:
+        if not text or not self.model.reg_key or not self.model.cfl_key:
+            return ""
+        if not self.model.pda_config_key or self.model.pda_config_key == "empty":
+            return ""
+        return self.find_longest_intersection_substring(text)

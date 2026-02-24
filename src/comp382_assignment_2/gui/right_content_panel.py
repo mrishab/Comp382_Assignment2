@@ -26,7 +26,7 @@ class RightContentPanel(QWidget):
         self.button_panel = PDAButtonPanel(self.app_config)
         root.addWidget(self.button_panel)
 
-        self.set_filtered_input_text("")
+        self.filtered_input_label = FieldLabel("Filtered Input: --")
         root.addWidget(self.filtered_input_label)
 
         self.super_pda_view = SuperPDAView()
