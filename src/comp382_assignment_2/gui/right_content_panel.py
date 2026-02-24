@@ -8,14 +8,12 @@ from comp382_assignment_2.super_pda.base import BaseSuperPDA
 
 
 class RightContentPanel(QWidget):
-    """Right panel: section title + Super PDA graph view."""
-
     def __init__(self, app_config: AppConfig, parent=None):
         super().__init__(parent)
         self.app_config = app_config
-        self._setup_ui()
+        self.setup_ui()
 
-    def _setup_ui(self):
+    def setup_ui(self):
         self.setObjectName("PdaContainer")
         root = QVBoxLayout(self)
         root.setContentsMargins(8, 8, 8, 8)

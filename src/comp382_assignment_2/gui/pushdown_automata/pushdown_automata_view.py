@@ -72,7 +72,7 @@ _PYVIS_OPTIONS = """{
 }"""
 
 
-def _escape_js(s: str) -> str:
+def escape_js(s: str) -> str:
     """Escape a string for safe embedding inside a JS string literal."""
     return s.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
 
@@ -106,16 +106,16 @@ class PushdownAutomataView(QWidget):
 
     def render_graph(self, model):
         """Full page rebuild — call when the PDA changes (dropdown selection)."""
-        html = self._render_full(model)
+        html = self.render_full(model)
         with open(self._html_path, "w", encoding="utf-8") as f:
             f.write(html)
         self._page_loaded = False
         # Reconnect the signal (it disconnects itself after each load) and reload.
         try:
-            self.web_view.loadFinished.disconnect(self._on_page_loaded)
+            self.web_view.loadFinished.disconnect(self.on_page_loaded)
         except RuntimeError:
             pass
-        self.web_view.loadFinished.connect(self._on_page_loaded)
+        self.web_view.loadFinished.connect(self.on_page_loaded)
         self.web_view.load(QUrl.fromLocalFile(self._html_path))
 
     def update_state(self, model):
@@ -124,7 +124,7 @@ class PushdownAutomataView(QWidget):
             # Page is still loading (render_graph already triggered the load).
             # Skip this lightweight update; the full graph will appear once loaded.
             return
-        js = self._build_state_update_js(model)
+        js = self.build_state_update_js(model)
         self.web_view.page().runJavaScript(js)
 
     # Back-compat: old code calls update_view
@@ -133,16 +133,16 @@ class PushdownAutomataView(QWidget):
 
     # ── private slots ────────────────────────────────────────────────────────
 
-    def _on_page_loaded(self, ok: bool):
+    def on_page_loaded(self, ok: bool):
         self._page_loaded = ok
         try:
-            self.web_view.loadFinished.disconnect(self._on_page_loaded)
+            self.web_view.loadFinished.disconnect(self.on_page_loaded)
         except RuntimeError:
             pass
 
     # ── graph building ───────────────────────────────────────────────────────
 
-    def _build_nx_graph(self, model):
+    def build_nx_graph(self, model):
         """Build a NetworkX MultiDiGraph from the PDA and aggregate edge labels."""
         G = nx.MultiDiGraph()
         for state in model.states:
@@ -159,7 +159,7 @@ class PushdownAutomataView(QWidget):
 
         return G, edge_labels
 
-    def _pyvis_from_nx(self, model, G, edge_labels) -> str:
+    def pyvis_from_nx(self, model, G, edge_labels) -> str:
         """Generate Pyvis HTML using local vis.js, return the HTML string."""
         net = Network(
             height="100%",
@@ -202,7 +202,7 @@ class PushdownAutomataView(QWidget):
 
     # ── HTML composition ─────────────────────────────────────────────────────
 
-    def _stack_html(self, model) -> str:
+    def stack_html(self, model) -> str:
         stack = list(reversed(model.stack))
         if not stack:
             items = "<span style='color:#888;font-style:italic'>empty</span>"
@@ -219,7 +219,7 @@ class PushdownAutomataView(QWidget):
             f"<div style='display:flex;flex-wrap:wrap;align-items:center;gap:2px'>{items}</div>"
         )
 
-    def _info_html(self, model) -> str:
+    def info_html(self, model) -> str:
         consumed = model.input_string[: model.input_index] or "(none)"
         remaining = model.input_string[model.input_index :] or "(done)"
 
@@ -242,18 +242,18 @@ class PushdownAutomataView(QWidget):
             f"</div>"
         )
 
-    def _render_full(self, model) -> str:
-        G, edge_labels = self._build_nx_graph(model)
-        graph_html = self._pyvis_from_nx(model, G, edge_labels)
+    def render_full(self, model) -> str:
+        G, edge_labels = self.build_nx_graph(model)
+        graph_html = self.pyvis_from_nx(model, G, edge_labels)
 
         bottom_bar = f"""
         <div id="pda-bottom-bar" style='background:{_BG_COLOR};color:#eee;font-family:sans-serif;
                     padding:8px 14px;border-top:1px solid #333;font-size:13px'>
           <div id="pda-info" style="margin-bottom:6px">
-            {self._info_html(model)}
+                        {self.info_html(model)}
           </div>
           <div id="pda-stack">
-            {self._stack_html(model)}
+                        {self.stack_html(model)}
           </div>
         </div>
         """
@@ -324,9 +324,9 @@ class PushdownAutomataView(QWidget):
 
     # ── JS-based lightweight state update ─────────────────────────────────────
 
-    def _build_state_update_js(self, model) -> str:
-        info_html = _escape_js(self._info_html(model))
-        stack_html = _escape_js(self._stack_html(model))
+    def build_state_update_js(self, model) -> str:
+        info_html = escape_js(self.info_html(model))
+        stack_html = escape_js(self.stack_html(model))
         return (
             f"document.getElementById('pda-info').innerHTML = '{info_html}';"
             f"document.getElementById('pda-stack').innerHTML = '{stack_html}';"

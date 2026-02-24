@@ -11,7 +11,7 @@ from comp382_assignment_2.pda.pda_loader import load_pda
 from comp382_assignment_2.matchers.substring_utils import find_longest_matching_substring
 
 
-def _check_pda_accept(pda, input_str: str) -> bool:
+def check_pda_accept(pda, input_str: str) -> bool:
     """
     Helper function to check if a PDA accepts a string.
     Uses BFS to handle nondeterminism.
@@ -70,7 +70,7 @@ def an_bn(input_str: str) -> str:
     Example: "ab", "aabb", "aaabbb"
     """
     pda = load_pda("an_bn")
-    return find_longest_matching_substring(input_str, lambda s: _check_pda_accept(pda, s))
+    return find_longest_matching_substring(input_str, lambda s: check_pda_accept(pda, s))
 
 
 def a_bn_a(input_str: str) -> str:
@@ -80,7 +80,7 @@ def a_bn_a(input_str: str) -> str:
     Example: "aa", "aba", "abba", "abbba"
     """
     pda = load_pda("a_bn_a")
-    return find_longest_matching_substring(input_str, lambda s: _check_pda_accept(pda, s))
+    return find_longest_matching_substring(input_str, lambda s: check_pda_accept(pda, s))
 
 
 def bn(input_str: str) -> str:
@@ -90,4 +90,4 @@ def bn(input_str: str) -> str:
     Example: "b", "bb", "bbb"
     """
     pda = load_pda("bn")
-    return find_longest_matching_substring(input_str, lambda s: _check_pda_accept(pda, s))
+    return find_longest_matching_substring(input_str, lambda s: check_pda_accept(pda, s))

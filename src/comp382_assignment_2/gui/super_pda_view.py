@@ -43,30 +43,30 @@ class SuperPDAView(QWidget):
         self.render_placeholder()
 
     def render_placeholder(self):
-        self._render_message("Select Regular + CFL to load Super PDA")
+        self.render_message("Select Regular + CFL to load Super PDA")
 
     def render_empty_language(self):
-        self._render_message("∅ (empty language)")
+        self.render_message("∅ (empty language)")
 
     def render_graph(self, super_pda: BaseSuperPDA):
         self._super_pda = super_pda
         self._stack_symbol = super_pda.initial_stack_symbol
         self._base_edges = super_pda.graph_edges()
-        self._render_nodes(super_pda.graph_nodes())
+        self.render_nodes(super_pda.graph_nodes())
 
     def update_state(self, model):
         if self._super_pda is None:
             return
         nodes = self._super_pda.graph_nodes(model=model)
         stack_head = model.stack[-1] if model.stack else self._stack_symbol
-        self._render_nodes(nodes, stack_head=stack_head)
+        self.render_nodes(nodes, stack_head=stack_head)
 
     def reset_state(self):
         if self._super_pda is None:
             return
-        self._render_nodes(self._super_pda.graph_nodes(), stack_head=self._stack_symbol)
+        self.render_nodes(self._super_pda.graph_nodes(), stack_head=self._stack_symbol)
 
-    def _render_nodes(self, pda_nodes: list[dict], stack_head: str | None = None):
+    def render_nodes(self, pda_nodes: list[dict], stack_head: str | None = None):
         stack_display = stack_head or self._stack_symbol
         nodes = [
             {
@@ -84,7 +84,7 @@ class SuperPDAView(QWidget):
         ]
         self.graph_view.set_graph(nodes, self._base_edges, _OPTIONS)
 
-    def _render_message(self, message: str):
+    def render_message(self, message: str):
         self._super_pda = None
         self._base_edges = []
         nodes = [{

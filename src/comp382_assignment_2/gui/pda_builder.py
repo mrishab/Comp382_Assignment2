@@ -34,7 +34,7 @@ class PDABuilder:
     def __init__(self, config: dict):
         self._cfg = config
         self._edge_label_map: dict[tuple[str, str], list[str]] = {}  # lazily built
-        self._build_edge_label_map()
+        self.build_edge_label_map()
 
     # ── public properties ─────────────────────────────────────────────────────
 
@@ -187,7 +187,7 @@ class PDABuilder:
 
     # ── private ───────────────────────────────────────────────────────────────
 
-    def _build_edge_label_map(self) -> None:
+    def build_edge_label_map(self) -> None:
         """Pre-compute merged transition labels keyed by (src, dst)."""
         label_map: dict[tuple[str, str], list[str]] = {}
         for t in self.transitions:

@@ -55,7 +55,7 @@ class BaseSuperPDA:
         self.reset_runtime()
         self.input_string = input_string
 
-    def _match_transition(self, input_symbol: str | None) -> Transition | None:
+    def match_transition(self, input_symbol: str | None) -> Transition | None:
         stack_top = self.stack[-1] if self.stack else None
 
         for transition in self.transitions:
@@ -78,7 +78,7 @@ class BaseSuperPDA:
 
         return None
 
-    def _apply_transition(self, transition: Transition) -> None:
+    def apply_transition(self, transition: Transition) -> None:
         if transition.stack_top is not None and self.stack:
             self.stack.pop()
 
@@ -88,7 +88,7 @@ class BaseSuperPDA:
         self.current_state = transition.target
 
     def next_step(self, character: str) -> dict[str, Any]:
-        transition = self._match_transition(character)
+        transition = self.match_transition(character)
         if transition is None:
             return {
                 "transitioned": False,
@@ -97,7 +97,7 @@ class BaseSuperPDA:
                 "stack": list(self.stack),
             }
 
-        self._apply_transition(transition)
+        self.apply_transition(transition)
 
         consumed = transition.input_symbol is not None
         if consumed:
@@ -116,10 +116,10 @@ class BaseSuperPDA:
 
     def is_stuck(self) -> bool:
         current_char = self.input_string[self.input_index] if self.input_index < len(self.input_string) else None
-        return self._match_transition(current_char) is None
+        return self.match_transition(current_char) is None
 
     def is_stuck_for(self, character: str) -> bool:
-        return self._match_transition(character) is None
+        return self.match_transition(character) is None
 
     def position_map(self) -> dict[str, tuple[int, int]]:
         spacing = 180

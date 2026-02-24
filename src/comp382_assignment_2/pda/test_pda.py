@@ -6,7 +6,7 @@ import pytest
 from comp382_assignment_2.pda.pda_loader import load_pda, list_pdas
 
 
-def _run_pda(name: str, input_str: str) -> bool:
+def run_pda(name: str, input_str: str) -> bool:
     """Load a PDA by config key, run it on input_str, return acceptance."""
     model = load_pda(name)
     model.load_input(input_str)
@@ -28,7 +28,7 @@ _ACCEPT_CASES = [
     "name,input_str", _ACCEPT_CASES, ids=[f"{n}:{s}" for n, s in _ACCEPT_CASES]
 )
 def test_accept_example_strings(name: str, input_str: str):
-    assert _run_pda(name, input_str), f"PDA '{name}' should accept '{input_str}'"
+    assert run_pda(name, input_str), f"PDA '{name}' should accept '{input_str}'"
 
 
 # ── Reject cases ─────────────────────────────────────────────────────────
@@ -57,7 +57,7 @@ _REJECT_CASES = [
     "name,input_str", _REJECT_CASES, ids=[f"{n}:reject:{s!r}" for n, s in _REJECT_CASES]
 )
 def test_reject_strings(name: str, input_str: str):
-    assert not _run_pda(name, input_str), f"PDA '{name}' should reject '{input_str}'"
+    assert not run_pda(name, input_str), f"PDA '{name}' should reject '{input_str}'"
 
 
 # ── Intersection correctness ────────────────────────────────────────────
@@ -65,12 +65,12 @@ def test_reject_strings(name: str, input_str: str):
 
 def test_intersection_a_star_b_star_x_an_bn():
     """a*b* ∩ aⁿbⁿ = aⁿbⁿ"""
-    assert _run_pda("an_bn", "aabb")
-    assert not _run_pda("an_bn", "aab")
+    assert run_pda("an_bn", "aabb")
+    assert not run_pda("an_bn", "aab")
 
 
 def test_intersection_a_star_x_bn_is_empty():
     """a* ∩ bⁿ = ∅"""
     # The 'empty' PDA has no final states — rejects everything
     for s in ["", "a", "b", "ab", "aa", "bb"]:
-        assert not _run_pda("empty", s)
+        assert not run_pda("empty", s)

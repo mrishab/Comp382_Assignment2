@@ -16,9 +16,9 @@ class PDAButtonPanel(QWidget):
     def __init__(self, app_config: AppConfig, parent=None):
         super().__init__(parent)
         self.app_config = app_config
-        self._setup_ui()
+        self.setup_ui()
 
-    def _setup_ui(self):
+    def setup_ui(self):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)

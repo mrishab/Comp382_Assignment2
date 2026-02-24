@@ -17,13 +17,13 @@ _PYVIS_LIB = os.path.join(os.path.dirname(pyvis.__file__), "templates", "lib")
 _VIS_DIR   = os.path.join(_PYVIS_LIB, "vis-9.1.2")
 
 
-def _load_asset(filename: str) -> str:
+def load_asset(filename: str) -> str:
     with open(os.path.join(_VIS_DIR, filename), "r", encoding="utf-8") as f:
         return f.read()
 
 
-_VIS_JS  = _load_asset("vis-network.min.js")
-_VIS_CSS = _load_asset("vis-network.css")
+_VIS_JS  = load_asset("vis-network.min.js")
+_VIS_CSS = load_asset("vis-network.css")
 
 _FLOW_DIAGRAM_OPTIONS = {
     "nodes": {
@@ -51,11 +51,11 @@ _FLOW_DIAGRAM_OPTIONS = {
 }
 
 
-def _js_string(value: Any) -> str:
+def js_string(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False)
 
 
-def _extract_options(options: Any) -> dict[str, Any]:
+def extract_options(options: Any) -> dict[str, Any]:
     if options is None:
         return {}
 
@@ -165,24 +165,24 @@ class VisHtmlView(QWidget):
 
         self._loaded = False
         self._pending_graph: tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]] | None = None
-        self.web_view.loadFinished.connect(self._on_load_finished)
+        self.web_view.loadFinished.connect(self.on_load_finished)
         self.web_view.setHtml(_BASE_HTML.replace("__BG__", self._bg))
 
     # ── public API ────────────────────────────────────────────────────────────
 
-    def _on_load_finished(self, ok: bool) -> None:
+    def on_load_finished(self, ok: bool) -> None:
         self._loaded = ok
         if ok and self._pending_graph is not None:
             nodes, edges, options = self._pending_graph
             self._pending_graph = None
-            self._render_graph(nodes, edges, options)
+            self.render_graph(nodes, edges, options)
 
-    def _render_graph(self, nodes: list[dict[str, Any]], edges: list[dict[str, Any]], options: dict[str, Any]) -> None:
+    def render_graph(self, nodes: list[dict[str, Any]], edges: list[dict[str, Any]], options: dict[str, Any]) -> None:
         js = (
             "renderGraph("
-            f"{_js_string(nodes)},"
-            f"{_js_string(edges)},"
-            f"{_js_string(options)}"
+            f"{js_string(nodes)},"
+            f"{js_string(edges)},"
+            f"{js_string(options)}"
             ");"
         )
         self.web_view.page().runJavaScript(js)
@@ -198,7 +198,7 @@ class VisHtmlView(QWidget):
         """
         resolved_options = options or {}
         if self._loaded:
-            self._render_graph(nodes, edges, resolved_options)
+            self.render_graph(nodes, edges, resolved_options)
             return
         self._pending_graph = (nodes, edges, resolved_options)
 
@@ -208,7 +208,7 @@ class VisHtmlView(QWidget):
         """
         nodes = list(net.nodes)
         edges = list(net.edges)
-        options = _extract_options(getattr(net, "options", None))
+        options = extract_options(getattr(net, "options", None))
         self.set_graph(nodes, edges, options)
 
     def run_js(self, js: str) -> None:
