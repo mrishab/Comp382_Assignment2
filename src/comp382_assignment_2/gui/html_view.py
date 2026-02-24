@@ -25,6 +25,31 @@ def _load_asset(filename: str) -> str:
 _VIS_JS  = _load_asset("vis-network.min.js")
 _VIS_CSS = _load_asset("vis-network.css")
 
+_FLOW_DIAGRAM_OPTIONS = {
+    "nodes": {
+        "font": {"size": 14, "color": Color.TEXT_WHITE.value, "face": "monospace"},
+        "borderWidth": 2,
+        "shadow": {"enabled": True, "color": "rgba(0,0,0,0.5)", "size": 8},
+    },
+    "edges": {
+        "color": {"color": Color.FLOW_EDGE.value},
+        "font": {"size": 11, "color": Color.FLOW_EDGE_FONT.value, "strokeWidth": 0, "align": "middle"},
+        "arrows": {"to": {"enabled": True, "scaleFactor": 0.9}},
+        "smooth": {"type": "cubicBezier", "forceDirection": "vertical", "roundness": 0.4},
+    },
+    "layout": {
+        "hierarchical": {
+            "enabled": True,
+            "direction": "UD",
+            "sortMethod": "directed",
+            "nodeSpacing": 130,
+            "levelSeparation": 100,
+        }
+    },
+    "physics": {"enabled": False},
+    "interaction": {"dragNodes": False, "zoomView": False, "dragView": False},
+}
+
 
 def _js_string(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False)
@@ -189,3 +214,7 @@ class VisHtmlView(QWidget):
     def run_js(self, js: str) -> None:
         """Run *js* in the currently loaded page."""
         self.web_view.page().runJavaScript(js)
+
+    @staticmethod
+    def apply_flow_diagram_options(net: Network) -> None:
+        net.set_options(json.dumps(_FLOW_DIAGRAM_OPTIONS))

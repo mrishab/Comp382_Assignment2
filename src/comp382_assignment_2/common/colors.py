@@ -38,3 +38,16 @@ class Color(str, Enum):
     STATUS_IDLE_TEXT = "#888"
     STATUS_IDLE_BORDER = "#444"
     LABEL_MUTED = "#cfcfcf"
+
+    # Flow diagram specific node colors.
+    FLOW_IDLE_BG = "#4A4A6A"
+    FLOW_IDLE_BORDER = "#7070AA"
+    FLOW_GATE_BG = "#2d6a4f"
+    FLOW_GATE_BORDER = "#40916c"
+    FLOW_RESULT_BG = "#22304A"
+    FLOW_RESULT_BORDER = "#5a7eaa"
+    FLOW_LANG_BG = "#1e2a3e"
+    FLOW_START_BG = "#6A4A8A"
+    FLOW_START_BORDER = "#9A70BB"
+    FLOW_EDGE = "#5a7eaa"
+    FLOW_EDGE_FONT = "#aaaacc"

@@ -1,44 +1,34 @@
-import networkx as nx
 from pyvis.network import Network
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
+from comp382_assignment_2.common.colors import Color
+from comp382_assignment_2.common.flow_diagram_status import FlowDiagramStatus
 from comp382_assignment_2.gui.html_view import VisHtmlView
+from comp382_assignment_2.gui.node_style_map import NodeStyleMap
 
-_BG = "#1a1a2a"
+_BG = Color.GRAPH_BACKGROUND_DARK.value
 
-_COL = {
-    "idle":   {"background": "#4A4A6A", "border": "#7070AA"},
-    "gate":   {"background": "#2d6a4f", "border": "#40916c"},
-    "input":  {"background": "#4A90D9", "border": "#2C5F8A"},
-    "result": {"background": "#22304A", "border": "#5a7eaa"},
-    "lang":   {"background": "#1e2a3e", "border": "#4A90D9"},
-    "start":  {"background": "#6A4A8A", "border": "#9A70BB"},
+_LEVELS = {
+    "Regex": 0,
+    "CFL": 0,
+    "DFA": 1,
+    "PDA": 1,
+    "∩ Gate": 2,
+    "Input": 3,
+    "Language": 3,
+    "Result": 4,
 }
 
-_OPTIONS = """{
-  "nodes": {
-    "font": { "size": 14, "color": "#ffffff", "face": "monospace" },
-    "borderWidth": 2,
-    "shadow": { "enabled": true, "color": "rgba(0,0,0,0.5)", "size": 8 }
-  },
-  "edges": {
-    "color": { "color": "#5a7eaa" },
-    "font": { "size": 11, "color": "#aaaacc", "strokeWidth": 0, "align": "middle" },
-    "arrows": { "to": { "enabled": true, "scaleFactor": 0.9 } },
-    "smooth": { "type": "cubicBezier", "forceDirection": "vertical", "roundness": 0.4 }
-  },
-  "layout": {
-    "hierarchical": {
-      "enabled": true,
-      "direction": "UD",
-      "sortMethod": "directed",
-      "nodeSpacing": 130,
-      "levelSeparation": 100
-    }
-  },
-  "physics": { "enabled": false },
-  "interaction": { "dragNodes": false, "zoomView": false, "dragView": false }
-}"""
+_EDGES = [
+    ("Regex", "DFA"),
+    ("CFL", "PDA"),
+    ("DFA", "∩ Gate"),
+    ("PDA", "∩ Gate"),
+    ("∩ Gate", "Language"),
+    ("Input", "Language"),
+    ("Language", "Result"),
+]
+
 
 class FlowDiagram(QWidget):
     def __init__(self, parent=None):
@@ -50,56 +40,37 @@ class FlowDiagram(QWidget):
         self.view = VisHtmlView(bg_color=_BG)
         layout.addWidget(self.view)
 
-        # ── Public state (mutated by main_panel before calling update()) ──────
-        self.result_text:    str        = ""
-        self.language_label: str        = ""
-        self.selected_regex: str        = ""
-        self.selected_cfl:   str        = ""
-        self.input_value:    str        = ""
+        self.result_text: str = ""
+        self.language_label: str = ""
+        self.selected_regex: str = ""
+        self.selected_cfl: str = ""
+        self.input_value: str = ""
 
         self.render()
 
-
     def render(self):
-        # ── node labels ──────────────────────────────────────────────────────
-        regex_label  = self.selected_regex or "Regex"
-        cfl_label    = self.selected_cfl   or "CFL"
-        input_label  = self.input_value    or "Input"
-        gate_label   = "∩ Gate"
-        lang_label   = self.language_label or "Language"
-        result_label = self.result_text    or "Result"
-
-        G = nx.DiGraph()
-        G.add_node("Regex",    level=0)
-        G.add_node("CFL",      level=0)
-        G.add_node("DFA",      level=1)
-        G.add_node("PDA",      level=1)
-        G.add_node("∩ Gate",   level=2)
-        G.add_node("Input",    level=3)
-        G.add_node("Language", level=3)
-        G.add_node("Result",   level=4)
-
-        G.add_edge("Regex",    "DFA",      label="")
-        G.add_edge("CFL",      "PDA",      label="")
-        G.add_edge("DFA",      "∩ Gate",   label="")
-        G.add_edge("PDA",      "∩ Gate",   label="")
-        G.add_edge("∩ Gate",   "Language", label="")
-        G.add_edge("Input",    "Language", label="")
-        G.add_edge("Language", "Result",   label="")
-
-        net = Network(height="100%", width="100%", directed=True, notebook=False, bgcolor=_BG)
-        net.set_options(_OPTIONS)
+        regex_label = self.selected_regex or "Regex"
+        cfl_label = self.selected_cfl or "CFL"
+        dfa_label = "DFA"
+        pda_label = "PDA"
+        gate_label = "∩ Gate"
+        input_label = self.input_value or "Input"
+        language_label = self.language_label or "Language"
+        result_label = self.result_text or "Result"
 
         node_defs = {
-            "Regex":    (regex_label,  _COL["start"],                        "ellipse", 28),
-            "CFL":      (cfl_label,    _COL["start"],                        "ellipse", 28),
-            "DFA":      ("DFA",        _COL["idle"],                         "ellipse", 32),
-            "PDA":      ("PDA",        _COL["idle"],                         "ellipse", 32),
-            "∩ Gate":   (gate_label,   _COL["gate"],                         "box",     30),
-            "Input":    (input_label,  _COL["input"],                        "box",     28),
-            "Language": (lang_label,   _COL["lang"],                         "box",     28),
-            "Result":   (result_label, _COL["result"],                       "box",     30),
+            "Regex": (regex_label, NodeStyleMap.flow(FlowDiagramStatus.START), "ellipse", 28),
+            "CFL": (cfl_label, NodeStyleMap.flow(FlowDiagramStatus.START), "ellipse", 28),
+            "DFA": (dfa_label, NodeStyleMap.flow(FlowDiagramStatus.IDLE), "ellipse", 32),
+            "PDA": (pda_label, NodeStyleMap.flow(FlowDiagramStatus.IDLE), "ellipse", 32),
+            "∩ Gate": (gate_label, NodeStyleMap.flow(FlowDiagramStatus.GATE), "box", 30),
+            "Input": (input_label, NodeStyleMap.flow(FlowDiagramStatus.INPUT), "box", 28),
+            "Language": (language_label, NodeStyleMap.flow(FlowDiagramStatus.LANG), "box", 28),
+            "Result": (result_label, NodeStyleMap.flow(FlowDiagramStatus.RESULT), "box", 30),
         }
+
+        net = Network(height="100%", width="100%", directed=True, notebook=False, bgcolor=_BG)
+        VisHtmlView.apply_flow_diagram_options(net)
 
         for node_id, (label, color, shape, size) in node_defs.items():
             net.add_node(
@@ -108,11 +79,10 @@ class FlowDiagram(QWidget):
                 color=color,
                 shape=shape,
                 size=size,
-                level=G.nodes[node_id]["level"],
+                level=_LEVELS[node_id],
             )
 
-        for u, v, data in G.edges(data=True):
-            net.add_edge(u, v, label=data.get("label", ""))
+        for source, target in _EDGES:
+            net.add_edge(source, target, label="")
 
-        # ── render via shared HTML view ───────────────────────────────────────
         self.view.set_graph_from_net(net)
