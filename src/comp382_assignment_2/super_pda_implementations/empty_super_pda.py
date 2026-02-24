@@ -1,4 +1,5 @@
 from comp382_assignment_2.super_pda.base import BaseSuperPDA
+from comp382_assignment_2.super_pda.stack_view import StackView
 from comp382_assignment_2.common.colors import Color
 from comp382_assignment_2.common.status import Status
 
@@ -20,6 +21,9 @@ class EmptySuperPDA(BaseSuperPDA):
 
     def __init__(self):
         super().__init__()
+        self.stack_view = StackView()
+        self.stack_view.reset([self.initial_stack_symbol])
+        self.stack = self.stack_view
         self.machine_status = Status.RUNNING
         self.nodes: list[dict] = []
         self.edges: list[dict] = []
@@ -28,6 +32,8 @@ class EmptySuperPDA(BaseSuperPDA):
 
     def load_input(self, input_string: str) -> None:
         super().load_input(input_string)
+        self.stack_view.reset([self.initial_stack_symbol])
+        self.stack = self.stack_view
         self.machine_status = Status.ACCEPTED if input_string == "" else Status.REJECTED
         self.graph_nodes(self)
 
@@ -74,7 +80,7 @@ class EmptySuperPDA(BaseSuperPDA):
             "transitioned": False,
             "consumed": False,
             "state": self.current_state,
-            "stack": list(self.stack),
+            "stack": self.stack_view.to_list(),
             "status": self.machine_status,
         }
 

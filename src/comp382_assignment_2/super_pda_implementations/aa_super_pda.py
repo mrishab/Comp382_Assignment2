@@ -1,4 +1,5 @@
 from comp382_assignment_2.super_pda.base import BaseSuperPDA, Transition
+from comp382_assignment_2.super_pda.stack_view import StackView
 from comp382_assignment_2.common.colors import Color
 from comp382_assignment_2.common.status import Status
 
@@ -23,11 +24,20 @@ class AASuperPDA(BaseSuperPDA):
 
     def __init__(self):
         super().__init__()
+        self.stack_view = StackView()
+        self.stack_view.reset([self.initial_stack_symbol])
+        self.stack = self.stack_view
         self.machine_status = Status.RUNNING
         self.nodes: list[dict] = []
         self.edges: list[dict] = []
         self.graph_edges()
         self.graph_nodes(self)
+
+    def load_input(self, input_string: str) -> None:
+        super().load_input(input_string)
+        self.stack_view.reset([self.initial_stack_symbol])
+        self.stack = self.stack_view
+        self.machine_status = Status.RUNNING
 
     def node_color(self, state: str, model=None) -> dict:
         active_state = model.current_state if model is not None else self.current_state
@@ -72,7 +82,7 @@ class AASuperPDA(BaseSuperPDA):
                 "transitioned": False,
                 "consumed": False,
                 "state": self.current_state,
-                "stack": list(self.stack),
+                "stack": self.stack_view.to_list(),
                 "status": self.machine_status,
             }
 
@@ -82,7 +92,7 @@ class AASuperPDA(BaseSuperPDA):
                 "transitioned": False,
                 "consumed": False,
                 "state": self.current_state,
-                "stack": list(self.stack),
+                "stack": self.stack_view.to_list(),
                 "status": self.machine_status,
             }
 
@@ -110,6 +120,6 @@ class AASuperPDA(BaseSuperPDA):
             "transitioned": transitioned,
             "consumed": transitioned,
             "state": self.current_state,
-            "stack": list(self.stack),
+            "stack": self.stack_view.to_list(),
             "status": self.machine_status,
         }

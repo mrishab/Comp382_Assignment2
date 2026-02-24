@@ -1,13 +1,11 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
 from comp382_assignment_2.common.colors import Color
-from comp382_assignment_2.common.super_pda_view_status import SuperPDAViewStatus
 from comp382_assignment_2.gui.html_view import VisHtmlView
-from comp382_assignment_2.gui.node_style_map import NodeStyleMap
 from comp382_assignment_2.super_pda.base import BaseSuperPDA
+from comp382_assignment_2.super_pda.stack_view import StackView
 
 _BG = Color.GRAPH_BACKGROUND_DARK.value
-_STACK_NODE_ID = "__stack_head__"
 
 
 class SuperPDAView(QWidget):
@@ -35,37 +33,29 @@ class SuperPDAView(QWidget):
         self._super_pda = super_pda
         self._stack_symbol = super_pda.initial_stack_symbol
         self._base_edges = super_pda.graph_edges()
-        self.render_nodes(super_pda.graph_nodes())
+        stack_view = getattr(super_pda, "stack_view", None)
+        self.render_nodes(super_pda.graph_nodes(), stack_view=stack_view)
 
     def update_state(self, model):
         if self._super_pda is None:
             return
         nodes = self._super_pda.graph_nodes(model=model)
-        stack_head = model.stack[-1] if model.stack else self._stack_symbol
-        self.render_nodes(nodes, stack_head=stack_head)
+        stack_view = getattr(model, "stack_view", None)
+        self.render_nodes(nodes, stack_view=stack_view)
 
     def reset_state(self):
         if self._super_pda is None:
             return
-        self.render_nodes(self._super_pda.graph_nodes(), stack_head=self._stack_symbol)
+        stack_view = getattr(self._super_pda, "stack_view", None)
+        self.render_nodes(self._super_pda.graph_nodes(), stack_view=stack_view)
 
-    def render_nodes(self, pda_nodes: list[dict], stack_head: str | None = None):
-        stack_display = stack_head or self._stack_symbol
-        nodes = [
-            {
-                "id": _STACK_NODE_ID,
-                "label": f"Stack\n{stack_display}",
-                "color": NodeStyleMap.super_pda(SuperPDAViewStatus.STACK),
-                "shape": "box",
-                "size": 30,
-                "font": {"size": 13, "color": Color.SUPER_STACK_TEXT.value},
-                "x": 0,
-                "y": -450,
-                "fixed": {"x": True, "y": True},
-            },
-            *pda_nodes,
-        ]
-        self.graph_view.set_graph(nodes, self._base_edges, VisHtmlView.super_pda_options())
+    def render_nodes(self, pda_nodes: list[dict], stack_view: StackView | None = None):
+        active_stack_view = stack_view or StackView()
+        if stack_view is None:
+            active_stack_view.reset([self._stack_symbol])
+        nodes = [*active_stack_view.nodes(), *pda_nodes]
+        edges = [*active_stack_view.edges(), *self._base_edges]
+        self.graph_view.set_graph(nodes, edges, VisHtmlView.super_pda_options())
 
     def render_message(self, message: str):
         self._super_pda = None
@@ -73,7 +63,7 @@ class SuperPDAView(QWidget):
         nodes = [{
             "id": "hint",
             "label": message,
-            "color": NodeStyleMap.super_pda(SuperPDAViewStatus.HINT),
+            "color": {"background": Color.SUPER_HINT_BG.value, "border": Color.SUPER_HINT_BORDER.value},
             "shape": "box",
             "size": 35,
             "font": {"size": 14, "color": Color.SUPER_HINT_TEXT.value},

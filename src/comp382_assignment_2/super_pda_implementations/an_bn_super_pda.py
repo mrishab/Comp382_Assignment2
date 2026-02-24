@@ -1,4 +1,5 @@
 from comp382_assignment_2.super_pda.base import BaseSuperPDA, Transition
+from comp382_assignment_2.super_pda.stack_view import StackView
 from comp382_assignment_2.common.colors import Color
 from comp382_assignment_2.common.status import Status
 
@@ -25,6 +26,9 @@ class AnBnSuperPDA(BaseSuperPDA):
 
     def __init__(self):
         super().__init__()
+        self.stack_view = StackView()
+        self.stack_view.reset([])
+        self.stack = self.stack_view
         self.machine_status = Status.RUNNING
         self.nodes: list[dict] = []
         self.edges: list[dict] = []
@@ -33,7 +37,8 @@ class AnBnSuperPDA(BaseSuperPDA):
 
     def load_input(self, input_string: str) -> None:
         super().load_input(input_string)
-        self.stack = []
+        self.stack_view.reset([])
+        self.stack = self.stack_view
         self.machine_status = Status.RUNNING
 
     def node_color(self, state: str, model=None) -> dict:
@@ -79,7 +84,7 @@ class AnBnSuperPDA(BaseSuperPDA):
                 "transitioned": False,
                 "consumed": False,
                 "state": self.current_state,
-                "stack": list(self.stack),
+                "stack": self.stack_view.to_list(),
                 "status": self.machine_status,
             }
 
@@ -89,7 +94,7 @@ class AnBnSuperPDA(BaseSuperPDA):
                 "transitioned": False,
                 "consumed": False,
                 "state": self.current_state,
-                "stack": list(self.stack),
+                "stack": self.stack_view.to_list(),
                 "status": self.machine_status,
             }
 
@@ -98,25 +103,25 @@ class AnBnSuperPDA(BaseSuperPDA):
         if self.current_state == "q0":
             if character == "a":
                 self.current_state = "q1"
-                self.stack.append("A")
+                self.stack_view.push("A")
                 transitioned = True
             else:
                 self.machine_status = Status.REJECTED
         elif self.current_state == "q1":
             if character == "a":
                 self.current_state = "q1"
-                self.stack.append("A")
+                self.stack_view.push("A")
                 transitioned = True
-            elif character == "b" and self.stack:
+            elif character == "b" and not self.stack_view.is_empty():
                 self.current_state = "q2"
-                self.stack.pop()
+                self.stack_view.pop()
                 transitioned = True
             else:
                 self.machine_status = Status.REJECTED
         elif self.current_state == "q2":
-            if character == "b" and self.stack:
+            if character == "b" and not self.stack_view.is_empty():
                 self.current_state = "q2"
-                self.stack.pop()
+                self.stack_view.pop()
                 transitioned = True
             else:
                 self.machine_status = Status.REJECTED
@@ -127,7 +132,7 @@ class AnBnSuperPDA(BaseSuperPDA):
             self.consumed_input += character
             self.input_index += 1
 
-            if self.input_index == len(self.input_string) and not self.stack:
+            if self.input_index == len(self.input_string) and self.stack_view.is_empty():
                 self.machine_status = Status.ACCEPTED
             else:
                 self.machine_status = Status.RUNNING
@@ -138,7 +143,7 @@ class AnBnSuperPDA(BaseSuperPDA):
             "transitioned": transitioned,
             "consumed": transitioned,
             "state": self.current_state,
-            "stack": list(self.stack),
+            "stack": self.stack_view.to_list(),
             "status": self.machine_status,
         }
 
