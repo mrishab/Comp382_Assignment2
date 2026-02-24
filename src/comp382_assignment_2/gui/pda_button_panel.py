@@ -21,11 +21,10 @@ class PDAButtonPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
 
-        self.sim_btn = QPushButton(self.app_config.run_simulation_btn)
         self.next_btn = QPushButton(self.app_config.step_btn)
         self.reset_btn = QPushButton(self.app_config.reset_btn)
 
-        for button in (self.sim_btn, self.next_btn, self.reset_btn):
+        for button in (self.next_btn, self.reset_btn):
             button.setFixedHeight(32)
             button.setStyleSheet(_BTN_STYLE)
             layout.addWidget(button)

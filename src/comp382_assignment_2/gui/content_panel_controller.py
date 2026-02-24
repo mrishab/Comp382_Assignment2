@@ -33,7 +33,6 @@ class ContentPanelController:
         self.language_builder.connect_inputs(self._on_dropdown_changed, self._on_input_changed)
         self.right_panel.button_panel.next_btn.clicked.connect(self._on_next_clicked)
         self.right_panel.button_panel.reset_btn.clicked.connect(self._on_reset_clicked)
-        self.right_panel.button_panel.sim_btn.clicked.connect(self._on_simulate_clicked)
 
     def _sync_from_current_ui(self):
         self._on_dropdown_changed(-1)
@@ -108,10 +107,6 @@ class ContentPanelController:
             self._prepare_super_model(text)
 
         self.flow.update()
-
-    def _on_simulate_clicked(self):
-        # Placeholder action by requirement.
-        return
 
     def _on_next_clicked(self):
         if not self._super_definition:
