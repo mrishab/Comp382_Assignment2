@@ -1,5 +1,6 @@
 import os
 import json
+import copy
 from typing import Any
 
 import pyvis
@@ -48,6 +49,21 @@ _FLOW_DIAGRAM_OPTIONS = {
     },
     "physics": {"enabled": False},
     "interaction": {"dragNodes": False, "zoomView": False, "dragView": False},
+}
+
+_SUPER_PDA_OPTIONS = {
+    "nodes": {
+        "font": {"size": 15, "color": Color.TEXT_WHITE.value},
+        "borderWidth": 3,
+        "shadow": {"enabled": True},
+    },
+    "edges": {
+        "font": {"size": 10, "color": Color.EDGE_FONT_MUTED.value, "strokeWidth": 0},
+        "color": {"color": Color.EDGE_NEUTRAL.value},
+        "smooth": {"type": "curvedCW", "roundness": 0.25},
+        "arrows": {"to": {"enabled": True, "scaleFactor": 0.8}},
+    },
+    "physics": {"enabled": False},
 }
 
 
@@ -218,3 +234,7 @@ class VisHtmlView(QWidget):
     @staticmethod
     def apply_flow_diagram_options(net: Network) -> None:
         net.set_options(json.dumps(_FLOW_DIAGRAM_OPTIONS))
+
+    @staticmethod
+    def super_pda_options() -> dict[str, Any]:
+        return copy.deepcopy(_SUPER_PDA_OPTIONS)

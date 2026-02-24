@@ -1,30 +1,13 @@
-import json
-
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
 from comp382_assignment_2.common.colors import Color
+from comp382_assignment_2.common.super_pda_view_status import SuperPDAViewStatus
 from comp382_assignment_2.gui.html_view import VisHtmlView
+from comp382_assignment_2.gui.node_style_map import NodeStyleMap
 from comp382_assignment_2.super_pda.base import BaseSuperPDA
 
 _BG = Color.GRAPH_BACKGROUND_DARK.value
 _STACK_NODE_ID = "__stack_head__"
-
-_OPTIONS = {
-    "nodes": {
-        "font": {"size": 15, "color": Color.TEXT_WHITE.value},
-        "borderWidth": 3,
-        "shadow": {"enabled": True},
-    },
-    "edges": {
-        "font": {"size": 10, "color": "#dddddd", "strokeWidth": 0},
-        "color": {"color": "#667799"},
-        "smooth": {"type": "curvedCW", "roundness": 0.25},
-        "arrows": {"to": {"enabled": True, "scaleFactor": 0.8}},
-    },
-    "physics": {
-        "enabled": False,
-    },
-}
 
 
 class SuperPDAView(QWidget):
@@ -72,17 +55,17 @@ class SuperPDAView(QWidget):
             {
                 "id": _STACK_NODE_ID,
                 "label": f"Stack\n{stack_display}",
-                "color": {"background": "#2a3a55", "border": Color.NODE_DEFAULT_BG.value},
+                "color": NodeStyleMap.super_pda(SuperPDAViewStatus.STACK),
                 "shape": "box",
                 "size": 30,
-                "font": {"size": 13, "color": "#cfe5ff"},
+                "font": {"size": 13, "color": Color.SUPER_STACK_TEXT.value},
                 "x": 0,
                 "y": -450,
                 "fixed": {"x": True, "y": True},
             },
             *pda_nodes,
         ]
-        self.graph_view.set_graph(nodes, self._base_edges, _OPTIONS)
+        self.graph_view.set_graph(nodes, self._base_edges, VisHtmlView.super_pda_options())
 
     def render_message(self, message: str):
         self._super_pda = None
@@ -90,12 +73,11 @@ class SuperPDAView(QWidget):
         nodes = [{
             "id": "hint",
             "label": message,
-            "color": {"background": "#1e2a3e", "border": "#334466"},
+            "color": NodeStyleMap.super_pda(SuperPDAViewStatus.HINT),
             "shape": "box",
             "size": 35,
-            "font": {"size": 14, "color": "#556688"},
+            "font": {"size": 14, "color": Color.SUPER_HINT_TEXT.value},
         }]
         edges = []
-        options = json.loads(json.dumps(_OPTIONS))
-        options["physics"]["enabled"] = False
+        options = VisHtmlView.super_pda_options()
         self.graph_view.set_graph(nodes, edges, options)

@@ -51,3 +51,14 @@ class Color(str, Enum):
     FLOW_START_BORDER = "#9A70BB"
     FLOW_EDGE = "#5a7eaa"
     FLOW_EDGE_FONT = "#aaaacc"
+
+    # Shared edge styling in graph views.
+    EDGE_NEUTRAL = "#667799"
+    EDGE_FONT_MUTED = "#dddddd"
+
+    # Super PDA view special nodes.
+    SUPER_STACK_BG = "#2a3a55"
+    SUPER_STACK_TEXT = "#cfe5ff"
+    SUPER_HINT_BG = "#1e2a3e"
+    SUPER_HINT_BORDER = "#334466"
+    SUPER_HINT_TEXT = "#556688"
