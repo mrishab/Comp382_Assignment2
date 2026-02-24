@@ -1,13 +1,35 @@
-import re
 from typing import TYPE_CHECKING
 
 from comp382_assignment_2.gui.app_config import AppConfig
-from comp382_assignment_2.pda.pda_loader import load_cfl_pda, load_super_pda
+from comp382_assignment_2.matchers.intersection_matchers import (
+    intersect_r1_c1,
+    intersect_r1_c2,
+    intersect_r1_c3,
+    intersect_r2_c1,
+    intersect_r2_c2,
+    intersect_r2_c3,
+    intersect_r3_c1,
+    intersect_r3_c2,
+    intersect_r3_c3,
+)
 from comp382_assignment_2.super_pda.base import BaseSuperPDA
 from comp382_assignment_2.super_pda.registry import get_super_pda
 
 if TYPE_CHECKING:
     from comp382_assignment_2.gui.content_panel import ContentPanel
+
+
+_INTERSECTION_LONGEST_MAP = {
+    ("a_star_b_star", "an_bn"): intersect_r1_c1,
+    ("a_star_b_star", "a_bn_a"): intersect_r1_c2,
+    ("a_star_b_star", "bn"): intersect_r1_c3,
+    ("a_b_star_a", "an_bn"): intersect_r2_c1,
+    ("a_b_star_a", "a_bn_a"): intersect_r2_c2,
+    ("a_b_star_a", "bn"): intersect_r2_c3,
+    ("a_star", "an_bn"): intersect_r3_c1,
+    ("a_star", "a_bn_a"): intersect_r3_c2,
+    ("a_star", "bn"): intersect_r3_c3,
+}
 
 
 class ContentPanelController:
@@ -77,8 +99,6 @@ class ContentPanelController:
         self.right_panel.set_filtered_input_text(text)
 
         if not self._reg_key or not self._cfl_key or not text:
-            self.flow.dfa_status = None
-            self.flow.pda_status = None
             self.flow.result_text = ""
             self.flow.gate_status = "∩ Gate"
             if self._super_definition and self._pda_config_key not in (None, "empty"):
@@ -88,20 +108,9 @@ class ContentPanelController:
             self.flow.update()
             return
 
-        dfa_pattern = self.app_config.regular_languages.get(self._reg_key, {}).get("regex", "")
-        dfa_accept = bool(re.match(dfa_pattern, text)) if dfa_pattern else False
-        self.flow.dfa_status = dfa_accept
-
-        cfl_accept = self._test_cfl_acceptance(self._cfl_key, text)
-        self.flow.pda_status = cfl_accept
-
-        super_accept = self._test_super_pda_acceptance(text)
-        if super_accept:
-            self.flow.gate_status = "✓ Match"
-            self.flow.result_text = f'"{text}"'
-        else:
-            self.flow.gate_status = "✗ No Match"
-            self.flow.result_text = self.app_config.no_match_text
+        longest = self._find_longest_intersection_substring(text)
+        self.flow.gate_status = "Longest ∩"
+        self.flow.result_text = f'"{longest}"' if longest else self.app_config.no_match_text
 
         if self._super_definition and self._pda_config_key not in (None, "empty"):
             self._prepare_super_model(text)
@@ -159,24 +168,12 @@ class ContentPanelController:
         self.right_panel.super_pda_view.update_state(self._super_definition)
         self.right_panel.set_status("running" if text else "--")
 
-    def _test_cfl_acceptance(self, cfl_key: str, text: str) -> bool:
-        try:
-            model = load_cfl_pda(cfl_key)
-            model.load_input(text)
-            while not model.is_stuck() and not model.is_accepted():
-                model.step()
-            return model.is_accepted()
-        except KeyError:
-            return False
+    def _find_longest_intersection_substring(self, text: str) -> str:
+        if not self._reg_key or not self._cfl_key:
+            return ""
 
-    def _test_super_pda_acceptance(self, text: str) -> bool:
-        if not self._pda_config_key or self._pda_config_key == "empty":
-            return False
-        try:
-            model = load_super_pda(self._pda_config_key)
-            model.load_input(text)
-            while not model.is_stuck() and not model.is_accepted():
-                model.step()
-            return model.is_accepted()
-        except KeyError:
-            return False
+        matcher = _INTERSECTION_LONGEST_MAP.get((self._reg_key, self._cfl_key))
+        if matcher is None:
+            return ""
+
+        return matcher(text)

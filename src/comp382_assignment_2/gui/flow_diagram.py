@@ -8,8 +8,6 @@ _BG = "#1a1a2a"
 
 _COL = {
     "idle":   {"background": "#4A4A6A", "border": "#7070AA"},
-    "accept": {"background": "#5CB85C", "border": "#3A7A3A"},
-    "reject": {"background": "#E74C3C", "border": "#922B21"},
     "gate":   {"background": "#2d6a4f", "border": "#40916c"},
     "input":  {"background": "#4A90D9", "border": "#2C5F8A"},
     "result": {"background": "#22304A", "border": "#5a7eaa"},
@@ -63,8 +61,6 @@ class FlowDiagram(QWidget):
         # ── Public state (mutated by main_panel before calling update()) ──────
         self.gate_status:    str        = ""
         self.result_text:    str        = ""
-        self.dfa_status:     bool | None = None
-        self.pda_status:     bool | None = None
         self.language_label: str        = ""
         self.selected_regex: str        = ""
         self.selected_cfl:   str        = ""
@@ -79,20 +75,6 @@ class FlowDiagram(QWidget):
         self.render()
 
     # ── private ───────────────────────────────────────────────────────────────────
-
-    def _status_color(self, status: bool | None) -> dict:
-        if status is True:
-            return _COL["accept"]
-        if status is False:
-            return _COL["reject"]
-        return _COL["idle"]
-
-    def _edge_label(self, status: bool | None) -> str:
-        if status is True:
-            return "✓"
-        if status is False:
-            return "✗"
-        return ""
 
     def render(self):
         # ── node labels ──────────────────────────────────────────────────────
@@ -121,8 +103,8 @@ class FlowDiagram(QWidget):
 
         G.add_edge("Regex",    "DFA",      label="")
         G.add_edge("CFL",      "PDA",      label="")
-        G.add_edge("DFA",      "∩ Gate",   label=self._edge_label(self.dfa_status))
-        G.add_edge("PDA",      "∩ Gate",   label=self._edge_label(self.pda_status))
+        G.add_edge("DFA",      "∩ Gate",   label="")
+        G.add_edge("PDA",      "∩ Gate",   label="")
         G.add_edge("∩ Gate",   "Language", label="∩")
         G.add_edge("Input",    "Language", label="")
         G.add_edge("Language", "Result",   label="")
@@ -134,8 +116,8 @@ class FlowDiagram(QWidget):
         node_defs = {
             "Regex":    (regex_label,  _COL["start"],                        "ellipse", 28),
             "CFL":      (cfl_label,    _COL["start"],                        "ellipse", 28),
-            "DFA":      ("DFA",        self._status_color(self.dfa_status),   "ellipse", 32),
-            "PDA":      ("PDA",        self._status_color(self.pda_status),   "ellipse", 32),
+            "DFA":      ("DFA",        _COL["idle"],                         "ellipse", 32),
+            "PDA":      ("PDA",        _COL["idle"],                         "ellipse", 32),
             "∩ Gate":   (gate_label,   _COL["gate"],                         "box",     30),
             "Input":    (input_label,  _COL["input"],                        "box",     28),
             "Language": (lang_label,   _COL["lang"],                         "box",     28),
