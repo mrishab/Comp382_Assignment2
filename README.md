@@ -19,6 +19,42 @@ The interaction flow is:
 
 Because the substring is already produced by the selected intersection language, it is expected to be accepted by the SuperPDA constructed for that same intersection. A rejected state refers to a bug in the program.
 
+## UI Structure (AI generated ASCII Diagram)
+
+```ascii
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                          COMP 382 — Super PDA Simulator                          │
+│                    CFL ∩ Regular Language is a CFL · Demonstration               │
+├──────────────────────────────────────┬───────────────────────────────────────────┤
+│                                      │                                           │
+│  Regular Language                    │  Super PDA                                │
+│  ┌────────────────────────────────┐  │                                           │
+│  │ a*b* ▼                         │  |        ● IDLE                             │
+│  └────────────────────────────────┘  │                                           │
+│                                      │  Filtered Input: --                       │
+│  Context-Free Language               │                                           │
+│  ┌────────────────────────────────┐  │  ┌─────────────────────────────────────┐  │
+│  │ aⁿbⁿ                        ▼  │  │  │                                     │  │
+│  └────────────────────────────────┘  │  │  (q0) ── a ──▶ (q1) ── b ──▶ ((q2)) │  │
+│                                      │  │                                     │  │
+│  Input String                        │  │  Stack:                             │  │
+│  ┌────────────────────────────────┐  │  │  [Z₀] ──▶ [A] ──▶ [A]               │  │
+│  │ aaabbb                         │  │  │                                     │  │
+│  └────────────────────────────────┘  │  └─────────────────────────────────────┘  │
+│                                      │                                           │
+│  [ a ]  [ b ]  [ ε ]                 │                                           │
+│                                      │                                           │
+│  ┌────────────────────────────────┐  │                                           │
+│  │ Regex ──▶ DFA ──┐              │  │                                           │
+│  │                 │              │  │                                           │
+│  │ CFL   ──▶ PDA ──┴─▶ [ ∩ ]      │  │                                           │
+│  │                       │        │  │                                           │
+│  │                       ▼        │  │                                           │
+│  │ Input ──▶ [Result: ACCEPT]     │  │                                           │
+│  └────────────────────────────────┘  │                                           │
+└──────────────────────────────────────┴───────────────────────────────────────────┘
+```
+
 ## Dependencies
 
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) (version 0.9.24)
