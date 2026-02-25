@@ -4,6 +4,21 @@ A Python based app to simulate Super PDA that shows intersection of a CFL and Re
 
 View [Youtube VLOG](PASTE_VIDEO_LINK_HERE)
 
+## How the Project Works
+
+The project defines a set of Regular Languages and a set of Context-Free Languages (CFLs). For every permutation of one Regular Language and one CFL, there is an intersection language.
+
+The goal of the visualization is to show that an arbitrary intersection of these two language classes produces a CFL. To demonstrate that the intersection is a CFL, we show that a Pushdown Automaton (PDA) can be constructed for that intersection language. In this project, we call that machine a **SuperPDA** because it is the PDA built for the language produced by intersecting the selected Regular Language and CFL.
+
+The interaction flow is:
+
+1. The user selects one Regular Language and one CFL.
+2. The user enters any input string.
+3. The input is processed through the selected intersection matcher to extract the **longest matching substring**, which represents a string produced by the intersection language.
+4. That resulting substring is then checked by the corresponding SuperPDA.
+
+Because the substring is already produced by the selected intersection language, it is expected to be accepted by the SuperPDA constructed for that same intersection. A rejected state refers to a bug in the program.
+
 ## Dependencies
 
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) (version 0.9.24)
