@@ -1,6 +1,6 @@
 """
 tests.py - Comprehensive test suite for all matcher functions
-Tests against the exact language definitions from pda_configs.json
+Tests against PDA definitions exposed by implementation-backed loaders.
 
 """
 
